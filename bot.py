@@ -120,14 +120,13 @@ lore_tweets = [
 # Function to generate a tweet using the fine-tuned model
 def generate_tweet():
     try:
-        # Choose a random prompt and lore context
         prompt = random.choice(prompts)
         lore = random.choice(lore_contexts)
         emotion = random.choice(emotional_states)
         system_message = f"{lore} {emotion}"
 
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # Replace this with your fine-tuned model if it uses `gpt-4` base
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": prompt}
@@ -137,7 +136,6 @@ def generate_tweet():
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
-
 
 # Function to post a random lore tweet
 def post_random_lore_tweet():
@@ -156,24 +154,15 @@ def post_tweet(tweet_text):
     except tweepy.TweepyException as e:
         print(f"Error posting tweet: {e}")
 
-# Main logic to alternate between dynamic tweets and lore tweets every 30 minutes
-def run_bot():
-    while True:
-        try:
-            if random.random() < 0.8:  # 80% chance for a dynamic tweet
-                tweet = generate_tweet()
-                if tweet:
-                    post_tweet(tweet)
-            else:  # 20% chance for a lore tweet
-                post_random_lore_tweet()
-            
-            # Wait for 30 minutes before tweeting again
-            print("Waiting for 30 minutes before next tweet...")
-            time.sleep(1800)  # 1800 seconds = 30 minutes
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            time.sleep(1800)  # Wait before retrying in case of an error
+# Main logic: choose between dynamic or lore tweet
+def run_once():
+    if random.random() < 0.8:  # 80% chance for a dynamic tweet
+        tweet = generate_tweet()
+        if tweet:
+            post_tweet(tweet)
+    else:  # 20% chance for a lore tweet
+        post_random_lore_tweet()
 
-# Run the bot
-run_bot()
-
+# Execute the bot once
+if __name__ == "__main__":
+    run_once()
