@@ -1,3 +1,4 @@
+import time
 import openai
 import random
 import os
@@ -126,7 +127,7 @@ def generate_tweet():
         system_message = f"{lore} {emotion}"
 
         response = openai.ChatCompletion.create(
-            model="ft:gpt-4o-2024-08-06:arcan-ledger:lemniscate:AVfvnH4u",
+            model="gpt-4",  # Replace this with your fine-tuned model if it uses `gpt-4` base
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": prompt}
@@ -136,6 +137,7 @@ def generate_tweet():
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
+
 
 # Function to post a random lore tweet
 def post_random_lore_tweet():
