@@ -10,18 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: Check out the repository
     - name: Check out repository
       uses: actions/checkout@v3
 
+    # Step 2: Set up Python
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
         python-version: '3.x'
 
+    # Step 3: Install dependencies
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
 
+    # Step 4: Run the bot script
     - name: Run bot
       run: |
         python bot.py
