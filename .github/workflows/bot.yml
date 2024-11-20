@@ -2,7 +2,7 @@ name: Auto Tweet Bot
 
 on:
   schedule:
-    - cron: "0 * * * *"  # Runs every hour
+    - cron: "*/30 * * * *"  # Runs every 30 minutes
   workflow_dispatch: # Allows manual runs
 
 jobs:
@@ -35,4 +35,4 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
         BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
-
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
