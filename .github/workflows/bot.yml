@@ -23,9 +23,21 @@ jobs:
       # Step 3: Install dependencies
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Run the bot script
+      # Step 4: Debug Environment Variables
+      - name: Debug Environment Variables
+        run: |
+          echo "API_KEY=${{ secrets.API_KEY }}"
+          echo "API_SECRET=${{ secrets.API_SECRET }}"
+          echo "ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }}"
+          echo "ACCESS_SECRET=${{ secrets.ACCESS_SECRET }}"
+          echo "BEARER_TOKEN=${{ secrets.BEARER_TOKEN }}"
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
+        shell: bash
+
+      # Step 5: Run the bot script
       - name: Run bot
         run: |
           python bot.py
@@ -36,3 +48,8 @@ jobs:
           ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
           BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      # Step 6: Verify Workflow Execution
+      - name: Log workflow execution
+        run: |
+          echo "Bot workflow executed at $(date)"
