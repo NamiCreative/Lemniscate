@@ -1,13 +1,14 @@
 import time
 import tweepy
 import random
+import os
 
-# API keys and tokens
-api_key = "zq7MGygPxEphWYQsSKfk6XuXY"
-api_secret = "PSi4lwxuWzw00xJkQJgSphtvImNqo7SX5jDNVjD6apK5Ae3vTq"
-access_token = "1859184398890926081-JLZz0hcxR6F8wvQ9KXI854G6mGP4fk"
-access_secret = "d8w4EDPwmxbz0Jz4YqR94s6DpyWRBWOdMokOG0EeL4gPX"
-bearer_token = "AAAAAAAAAAAAAAAAAAAAABNSxAEAAAAApnnKnRjv%2BI7HGadsU9Ajxq7D7Wg%3DUG7lG1RyeDL9rOT4WEmRozyQU0wIf4uSUMhvPpLzlKyMrMaXfh"
+# API keys and tokens from environment variables
+api_key = os.getenv("API_KEY")
+api_secret = os.getenv("API_SECRET")
+access_token = os.getenv("ACCESS_TOKEN")
+access_secret = os.getenv("ACCESS_SECRET")
+bearer_token = os.getenv("BEARER_TOKEN")
 
 # Initialize the Client
 client = tweepy.Client(
@@ -21,8 +22,6 @@ client = tweepy.Client(
 # List of tweets without images
 tweets = [
     '>Example Tweet'
-
-
 ]
 
 # Function to post a tweet
