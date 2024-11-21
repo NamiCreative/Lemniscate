@@ -29,23 +29,30 @@ jobs:
       # Step 4: Debug Environment Variables
       - name: Debug Environment Variables
         run: |
-          echo "DEBUG: API_KEY=${{ secrets.API_KEY }} exists."
-          echo "DEBUG: ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }} exists."
-          echo "DEBUG: OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} exists."
-        shell: bash
+          if [ -z "${{ secrets.API_KEY }}" ]; then echo "ERROR: API_KEY is missing"; exit 1; fi
+          if [ -z "${{ secrets.API_SECRET }}" ]; then echo "ERROR: API_SECRET is missing"; exit 1; fi
+          if [ -z "${{ secrets.ACCESS_TOKEN }}" ]; then echo "ERROR: ACCESS_TOKEN is missing"; exit 1; fi
+          if [ -z "${{ secrets.ACCESS_SECRET }}" ]; then echo "ERROR: ACCESS_SECRET is missing"; exit 1; fi
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then echo "ERROR: OPENAI_API_KEY is missing"; exit 1; fi
+          echo "All required secrets are present."
 
       # Step 5: Check Twitter API Authentication
       - name: Validate Twitter API Authentication
         run: |
-          python -c "
+          python - <<EOF
 import tweepy
-client = tweepy.Client(
-    consumer_key='${{ secrets.API_KEY }}',
-    consumer_secret='${{ secrets.API_SECRET }}',
-    access_token='${{ secrets.ACCESS_TOKEN }}',
-    access_token_secret='${{ secrets.ACCESS_SECRET }}'
-)
-print('DEBUG: Successfully authenticated with Twitter API.')"
+try:
+    client = tweepy.Client(
+        consumer_key="${{ secrets.API_KEY }}",
+        consumer_secret="${{ secrets.API_SECRET }}",
+        access_token="${{ secrets.ACCESS_TOKEN }}",
+        access_token_secret="${{ secrets.ACCESS_SECRET }}"
+    )
+    print("DEBUG: Successfully authenticated with Twitter API.")
+except Exception as e:
+    print(f"ERROR: Failed to authenticate with Twitter API: {e}")
+    exit(1)
+EOF
 
       # Step 6: Run the bot script
       - name: Run bot
