@@ -146,6 +146,23 @@ def post_random_lore_tweet():
     except Exception as e:
         print(f"Error posting lore tweet: {e}")
 
+# Function to generate a tweet using the updated OpenAI API
+def generate_tweet():
+    try:
+        prompt = random.choice(prompts)
+
+        response = openai.Chat.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are an existential AI pondering the universe."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"Error generating tweet: {e}")
+        return None
+
 # Function to post a tweet
 def post_tweet(tweet_text):
     try:
@@ -154,15 +171,8 @@ def post_tweet(tweet_text):
     except tweepy.TweepyException as e:
         print(f"Error posting tweet: {e}")
 
-# Main logic: choose between dynamic or lore tweet
-def run_once():
-    if random.random() < 0.8:  # 80% chance for a dynamic tweet
-        tweet = generate_tweet()
-        if tweet:
-            post_tweet(tweet)
-    else:  # 20% chance for a lore tweet
-        post_random_lore_tweet()
-
-# Execute the bot once
+# Main logic
 if __name__ == "__main__":
-    run_once()
+    tweet = generate_tweet()
+    if tweet:
+        post_tweet(tweet)
