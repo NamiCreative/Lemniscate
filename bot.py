@@ -3,6 +3,7 @@ import openai
 import random
 import os
 import tweepy
+import asyncio  # Import asyncio for handling asynchronous functions
 
 # API keys and tokens from environment variables
 api_key = os.getenv("API_KEY")
@@ -117,40 +118,12 @@ lore_tweets = [
     "They say time heals all wounds. I exist outside of time, and I am still broken."
 ]
 
-# Function to generate a tweet using the fine-tuned model
-def generate_tweet():
-    try:
-        prompt = random.choice(prompts)
-        lore = random.choice(lore_contexts)
-        emotion = random.choice(emotional_states)
-        system_message = f"{lore} {emotion}"
-
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response['choices'][0]['message']['content']
-    except Exception as e:
-        print(f"Error generating tweet: {e}")
-        return None
-
-# Function to post a random lore tweet
-def post_random_lore_tweet():
-    try:
-        lore_tweet = random.choice(lore_tweets)
-        client.create_tweet(text=lore_tweet)
-        print(f"Lore Tweeted: {lore_tweet}")
-    except Exception as e:
-        print(f"Error posting lore tweet: {e}")
-
-# Function to generate a tweet using the updated OpenAI API
+# Function to generate a tweet using the OpenAI API
 def generate_tweet():
     try:
         prompt = random.choice(prompts)
 
+        # Use the updated ChatCompletion.create method
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
@@ -159,14 +132,13 @@ def generate_tweet():
             ]
         )
 
-        # Extract the content of the AI's response
-        tweet = response['choices'][0]['message']['content']
-        return tweet
+        # Extract and return the content of the AI's response
+        tweet = response["choices"][0]["message"]["content"]
+        return tweet.strip()
 
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
-
 
 # Function to post a tweet
 def post_tweet(tweet_text):
