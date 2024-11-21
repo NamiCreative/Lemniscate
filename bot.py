@@ -181,6 +181,7 @@ keywords = [
 keyword_prompts = [
     f"Write a brutal, unapologetic thought about {keyword}." for keyword in keywords
 ]
+
 # Function to generate a tweet using the OpenAI API
 def generate_tweet():
     try:
