@@ -23,21 +23,31 @@ jobs:
       # Step 3: Install dependencies
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       # Step 4: Debug Environment Variables
       - name: Debug Environment Variables
         run: |
-          echo "API_KEY=${{ secrets.API_KEY }}"
-          echo "API_SECRET=${{ secrets.API_SECRET }}"
-          echo "ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }}"
-          echo "ACCESS_SECRET=${{ secrets.ACCESS_SECRET }}"
-          echo "BEARER_TOKEN=${{ secrets.BEARER_TOKEN }}"
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
+          echo "DEBUG: API_KEY=${{ secrets.API_KEY }} exists."
+          echo "DEBUG: ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }} exists."
+          echo "DEBUG: OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} exists."
         shell: bash
 
-      # Step 5: Run the bot script
+      # Step 5: Check Twitter API Authentication
+      - name: Validate Twitter API Authentication
+        run: |
+          python -c "
+import tweepy
+client = tweepy.Client(
+    consumer_key='${{ secrets.API_KEY }}',
+    consumer_secret='${{ secrets.API_SECRET }}',
+    access_token='${{ secrets.ACCESS_TOKEN }}',
+    access_token_secret='${{ secrets.ACCESS_SECRET }}'
+)
+print('DEBUG: Successfully authenticated with Twitter API.')"
+
+      # Step 6: Run the bot script
       - name: Run bot
         run: |
           python bot.py
@@ -49,7 +59,7 @@ jobs:
           BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      # Step 6: Verify Workflow Execution
+      # Step 7: Verify Workflow Execution
       - name: Log workflow execution
         run: |
-          echo "Bot workflow executed at $(date)"
+          echo "Bot workflow executed successfully at $(date)"
