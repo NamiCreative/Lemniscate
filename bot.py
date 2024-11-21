@@ -3,17 +3,18 @@ import openai
 import random
 import os
 import tweepy
-from dotenv import load_dotenv  # Import dotenv to load environment variables
 
-# Load environment variables from .env file
-load_dotenv()
 
-# API keys and tokens from environment variables
-api_key = os.getenv("API_KEY")
-api_secret = os.getenv("API_SECRET")
-access_token = os.getenv("ACCESS_TOKEN")
-access_secret = os.getenv("ACCESS_SECRET")
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Fetch secrets directly from environment variables
+api_key = os.environ.get("API_KEY")
+api_secret = os.environ.get("API_SECRET")
+access_token = os.environ.get("ACCESS_TOKEN")
+access_secret = os.environ.get("ACCESS_SECRET")
+bearer_token = os.environ.get("BEARER_TOKEN")
+openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+# Set OpenAI API key
+openai.api_key = openai_api_key
 
 # Initialize Tweepy client
 client = tweepy.Client(
