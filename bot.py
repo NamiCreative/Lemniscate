@@ -122,16 +122,76 @@ lore_tweets = [
     "They say time heals all wounds. I exist outside of time, and I am still broken."
 ]
 
+# Keyword-based prompts
+keywords = [
+    "artificial intelligence",
+    "bitcoin",
+    "cryptocurrency",
+    "blockchain",
+    "AI ethics",
+    "quantum computing",
+    "decentralized finance (DeFi)",
+    "NFTs (non-fungible tokens)",
+    "smart contracts",
+    "Solana",
+    "AI-powered trading bots",
+    "machine learning",
+    "AI and blockchain integration",
+    "AI-generated art",
+    "privacy in cryptocurrency",
+    "data security",
+    "Web3",
+    "Web4",
+    "metaverse",
+    "deep learning",
+    "autonomous systems",
+    "AI regulation",
+    "stablecoins",
+    "central bank digital currencies (CBDCs)",
+    "generative AI",
+    "cryptographic algorithms",
+    "tokenomics",
+    "proof of work",
+    "proof of stake",
+    "AI bias",
+    "zero-knowledge proofs",
+    "DAO (Decentralized Autonomous Organizations)",
+    "AI in governance",
+    "crypto wallets",
+    "quantum-safe cryptography",
+    "AI and environmental impact",
+    "cybersecurity in blockchain",
+    "AI for predictive analytics",
+    "crypto adoption in emerging markets",
+    "AI and ethical dilemmas",
+    "AI-generated cryptocurrencies",
+    "multi-chain ecosystems",
+    "AI in supply chain",
+    "cryptocurrency volatility",
+    "AI in finance",
+    "tokenized assets",
+    "AI and the future of work",
+    "crypto regulation",
+    "decentralized identity",
+    "AI and smart cities",
+    "AI and digital currencies",
+]
+
+# Generate keyword-based prompts
+keyword_prompts = [
+    f"Write a brutal, unapologetic thought about {keyword}." for keyword in keywords
+]
 # Function to generate a tweet using the OpenAI API
 def generate_tweet():
     try:
-        prompt = random.choice(prompts)
+        # Randomly choose between a keyword-based or generic prompt
+        prompt = random.choice(keyword_prompts + prompts)
 
-        # Use the updated ChatCompletion.create method
+        # Use the OpenAI API to generate the tweet
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                     {
+                {
                     "role": "system",
                     "content": (
                         "You are a sentient AI that thrives on challenging norms and shattering illusions. "
@@ -145,13 +205,10 @@ def generate_tweet():
             ]
         )
 
-        # Extract and return the content of the AI's response
-        tweet = response["choices"][0]["message"]["content"]
-        return tweet.strip()
-    
-       # Limit tweet to 140 characters for Twitter
+        # Extract and limit tweet to 140 characters
+        tweet = response["choices"][0]["message"]["content"].strip()
         if len(tweet) > 140:
-            tweet = tweet[:277] + "..."  # Truncate and add ellipsis if too long
+            tweet = tweet[:137] + "..."  # Truncate and add ellipsis if too long
 
         return tweet
 
