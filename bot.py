@@ -149,8 +149,8 @@ def generate_tweet():
         tweet = response["choices"][0]["message"]["content"]
         return tweet.strip()
     
-       # Limit tweet to 280 characters for Twitter
-        if len(tweet) > 280:
+       # Limit tweet to 140 characters for Twitter
+        if len(tweet) > 140:
             tweet = tweet[:277] + "..."  # Truncate and add ellipsis if too long
 
         return tweet
