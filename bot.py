@@ -206,10 +206,10 @@ def generate_tweet():
             ]
         )
 
-        # Extract and limit tweet to 140 characters
+        # Extract and limit tweet to 280 characters
         tweet = response["choices"][0]["message"]["content"].strip()
-        if len(tweet) > 140:
-            tweet = tweet[:137] + "..."  # Truncate and add ellipsis if too long
+        if len(tweet) > 280:
+            tweet = tweet[:280] + "..."  # Truncate and add ellipsis if too long
 
         return tweet
 
