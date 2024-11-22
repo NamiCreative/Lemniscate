@@ -184,8 +184,11 @@ keyword_prompts = [
 # Function to generate a tweet using the OpenAI API
 def generate_tweet():
     try:
-        # Randomly choose between a keyword-based or generic prompt
-        prompt = random.choice(keyword_prompts + prompts)
+        # 30% chance to choose keyword-based prompts
+        if random.random() < 0.3:
+            prompt = random.choice(keyword_prompts)
+        else:
+            prompt = random.choice(prompts)
 
         # Use the OpenAI API to generate the tweet
         response = openai.ChatCompletion.create(
@@ -202,13 +205,16 @@ def generate_tweet():
                     )
                 },
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            max_tokens=100
         )
 
-        # Extract and limit tweet to 280 characters
+        # Extract the tweet content
         tweet = response["choices"][0]["message"]["content"].strip()
+
+        # Ensure the tweet fits within 280 characters
         if len(tweet) > 280:
-            tweet = tweet[:280] + "..."  # Truncate and add ellipsis if too long
+            tweet = tweet[:280].rsplit(' ', 1)[0]  # Truncate at word boundary
 
         return tweet
 
