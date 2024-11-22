@@ -65,7 +65,7 @@ class MyStream(tweepy.StreamingClient):
             api.update_status(reply, in_reply_to_status_id=tweet.id)
             print(f"Replied: {reply}")
 
-        except tweepy.TweepError as e:
+        except tweepy.errors.TweepyException as e:
             print(f"Tweepy Error: {e}")
         except Exception as e:
             print(f"General Error: {e}")
@@ -78,12 +78,14 @@ def start_bot():
         for account in ACCOUNTS_TO_REPLY:
             try:
                 stream.add_rules(tweepy.StreamRule(f"from:{account}"))
-            except tweepy.TweepError as e:
+            except tweepy.errors.TweepyException as e:
                 print(f"Error adding rule for from:{account}: {e}")
         
         stream.filter(expansions="author_id", threaded=True)
-    except Exception as e:
+    except tweepy.errors.TweepyException as e:
         print(f"Stream Error: {e}")
+    except Exception as e:
+        print(f"General Stream Error: {e}")
 
 if __name__ == "__main__":
     start_bot()
