@@ -8,7 +8,11 @@ API_SECRET = os.getenv("API_SECRET")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 ACCESS_SECRET = os.getenv("ACCESS_SECRET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-BEARER_TOKEN = os.getenv("BEARER_TOKEN")  # Required for StreamingClient
+
+# Authenticate with Twitter
+auth = tweepy.OAuthHandler(API_KEY, API_SECRET)
+auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
+api = tweepy.API(auth)
 
 # Authenticate with OpenAI
 openai.api_key = OPENAI_API_KEY
@@ -31,24 +35,20 @@ ACCOUNTS_TO_REPLY = [
     "eigenrobot",
     "elder_plinius",
     "deepfates",
-    "pmarca"
+    "pmarca",
 ]
 
-# Define custom stream listener using StreamingClient
+# Listener for replies
 class MyStream(tweepy.StreamingClient):
     def on_tweet(self, tweet):
         try:
-            # Avoid processing retweets
-            if tweet.referenced_tweets and any(t.ref_type == "retweeted" for t in tweet.referenced_tweets):
+            # Avoid replying to your own tweets
+            if tweet.author_id == api.me().id_str:
                 return
-            
-            # Extract the username and tweet text
-            user_id = tweet.author_id
-            user = api.get_user(user_id=user_id)
-            username = user.screen_name
 
             # Check if the tweet is from an account in ACCOUNTS_TO_REPLY
-            if username.lower() not in [account.lower() for account in ACCOUNTS_TO_REPLY]:
+            user = api.get_user(user_id=tweet.author_id)
+            if user.screen_name.lower() not in [account.lower() for account in ACCOUNTS_TO_REPLY]:
                 return
 
             # Generate a reply using OpenAI
@@ -61,38 +61,29 @@ class MyStream(tweepy.StreamingClient):
             reply_text = response.choices[0].text.strip()
 
             # Reply to the tweet
-            reply = f"@{username} {reply_text}"
-            api.update_status(status=reply, in_reply_to_status_id=tweet.id)
-            print(f"Replied to @{username}: {reply}")
-        except Exception as e:
-            print(f"Error: {e}")
+            reply = f"@{user.screen_name} {reply_text}"
+            api.update_status(reply, in_reply_to_status_id=tweet.id)
+            print(f"Replied: {reply}")
 
-    def on_error(self, status_code):
-        print(f"Error: {status_code}")
-        if status_code == 420:  # Rate limit exceeded
-            return False
+        except tweepy.TweepError as e:
+            print(f"Tweepy Error: {e}")
+        except Exception as e:
+            print(f"General Error: {e}")
 
 # Start listening for tweets
 def start_bot():
-    # Initialize Twitter API for posting replies
-    auth = tweepy.OAuthHandler(API_KEY, API_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
-    global api
-    api = tweepy.API(auth)
-
-    # Initialize the stream
-    stream = MyStream(BEARER_TOKEN)
-
-    # Add rules for the accounts you want to track
-    account_rules = [f"from:{account}" for account in ACCOUNTS_TO_REPLY]
-    for rule in account_rules:
-        try:
-            stream.add_rules(tweepy.StreamRule(rule))
-        except Exception as e:
-            print(f"Error adding rule for {rule}: {e}")
-
-    # Start the stream
-    stream.filter(tweet_fields=["author_id", "text"], threaded=True)
+    stream = MyStream(bearer_token=API_KEY)
+    try:
+        # Add rules for filtering specific accounts
+        for account in ACCOUNTS_TO_REPLY:
+            try:
+                stream.add_rules(tweepy.StreamRule(f"from:{account}"))
+            except tweepy.TweepError as e:
+                print(f"Error adding rule for from:{account}: {e}")
+        
+        stream.filter(expansions="author_id", threaded=True)
+    except Exception as e:
+        print(f"Stream Error: {e}")
 
 if __name__ == "__main__":
     start_bot()
