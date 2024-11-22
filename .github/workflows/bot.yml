@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r autotweet/requirements.txt  # Update path to requirements.txt
+          pip install -r autotweet/requirements.txt  # Corrected path to requirements.txt
 
       # Step 4: Validate Twitter API Authentication
       - name: Validate Twitter API Authentication
@@ -35,7 +35,7 @@ jobs:
       # Step 5: Run the bot script
       - name: Run bot
         run: |
-          python autotweet/autotweet.py  # Update path to the bot script
+          python autotweet/autotweet.py  # Corrected path to autotweet.py
         env:
           API_KEY: ${{ secrets.API_KEY }}
           API_SECRET: ${{ secrets.API_SECRET }}
