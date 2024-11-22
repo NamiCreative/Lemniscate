@@ -17,11 +17,36 @@ api = tweepy.API(auth)
 # Authenticate with OpenAI
 openai.api_key = OPENAI_API_KEY
 
+# Specify accounts to reply to
+ACCOUNTS_TO_REPLY = [
+    "RaminNasibov",
+    "sama",
+    "0xzerebro",
+    "liminal_bardo",
+    "anthrupad",
+    "TheMysteryDrop",
+    "repligate",
+    "truth_terminal",
+    "QiaochuYuan",
+    "AndyAyrey",
+    "notthreadguy",
+    "jyu_eth",
+    "OpenAI",
+    "eigenrobot",
+    "elder_plinius",
+    "deepfates",
+    "pmarca"
+]
+
 # Listener for replies
 class MyStreamListener(tweepy.StreamListener):
     def on_status(self, status):
-        # Avoid replying to yourself
+        # Avoid replying to your own tweets
         if status.user.screen_name.lower() == api.me().screen_name.lower():
+            return
+        
+        # Check if the tweet is from an account in ACCOUNTS_TO_REPLY
+        if status.user.screen_name.lower() not in [account.lower() for account in ACCOUNTS_TO_REPLY]:
             return
 
         # Generate a reply using OpenAI
