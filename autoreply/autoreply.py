@@ -12,15 +12,13 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Authenticate with Twitter API v2 using OAuth2.0
+# Corrected Tweepy client instantiation
 client = tweepy.Client(
     bearer_token=BEARER_TOKEN,
     consumer_key=API_KEY,
     consumer_secret=API_SECRET,
     access_token=ACCESS_TOKEN,
-    access_token_secret=ACCESS_SECRET,
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
+    access_token_secret=ACCESS_SECRET
 )
 
 # Authenticate with OpenAI
