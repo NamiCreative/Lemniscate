@@ -2,27 +2,29 @@ import tweepy
 import openai
 import os
 
-# Load API keys and credentials from environment variables
+# Load API keys and secrets from environment variables
 API_KEY = os.getenv("API_KEY")
 API_SECRET = os.getenv("API_SECRET")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 ACCESS_SECRET = os.getenv("ACCESS_SECRET")
-BEARER_TOKEN = os.getenv("BEARER_TOKEN")  # For v2 StreamingClient
+BEARER_TOKEN = os.getenv("BEARER_TOKEN")  # For v2 API
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Authenticate with OpenAI
-openai.api_key = OPENAI_API_KEY
-
-# Authenticate with Twitter using tweepy.Client for v2 endpoints
+# Authenticate with Twitter API v2 using OAuth2.0
 client = tweepy.Client(
     bearer_token=BEARER_TOKEN,
     consumer_key=API_KEY,
     consumer_secret=API_SECRET,
     access_token=ACCESS_TOKEN,
-    access_token_secret=ACCESS_SECRET
+    access_token_secret=ACCESS_SECRET,
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
 )
+
+# Authenticate with OpenAI
+openai.api_key = OPENAI_API_KEY
 
 # Specify accounts to reply to
 ACCOUNTS_TO_REPLY = [
@@ -45,8 +47,7 @@ ACCOUNTS_TO_REPLY = [
     "pmarca",
 ]
 
-
-# Listener for replies using tweepy.StreamingClient
+# Listener for replies
 class MyStream(tweepy.StreamingClient):
     def on_tweet(self, tweet):
         try:
@@ -82,13 +83,9 @@ class MyStream(tweepy.StreamingClient):
         print(f"Stream encountered an error: {status_code}")
         return True  # Keep the stream running
 
-
 # Start listening for tweets
 def start_bot():
-    # Use StreamingClient with Client ID and Secret if required
-    stream = MyStream(
-        bearer_token=BEARER_TOKEN,
-    )
+    stream = MyStream(bearer_token=BEARER_TOKEN)
     try:
         # Clear existing rules to prevent conflicts
         existing_rules = stream.get_rules().data
