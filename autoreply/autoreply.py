@@ -1,6 +1,10 @@
 import tweepy
 import openai
 import os
+from flask import Flask, request, redirect, jsonify
+
+# Flask app setup
+app = Flask(__name__)
 
 # Load API keys and secrets from environment variables
 API_KEY = os.getenv("API_KEY")
@@ -11,6 +15,15 @@ BEARER_TOKEN = os.getenv("BEARER_TOKEN")  # For v2 API
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+CALLBACK_URL = "https://autoreply-bot-adc8f67b7419.herokuapp.com/callback"
+
+# Tweepy OAuth2 user handler
+oauth2_user_handler = tweepy.OAuth2UserHandler(
+    client_id=CLIENT_ID,
+    redirect_uri=CALLBACK_URL,
+    scope=["tweet.read", "tweet.write", "users.read"],
+    client_secret=CLIENT_SECRET
+)
 
 # Corrected Tweepy client instantiation
 client = tweepy.Client(
@@ -81,8 +94,37 @@ class MyStream(tweepy.StreamingClient):
         print(f"Stream encountered an error: {status_code}")
         return True  # Keep the stream running
 
-# Start listening for tweets
+
+@app.route("/")
+def home():
+    """Home route."""
+    return "AutoReply Bot is running!"
+
+@app.route("/login")
+def login():
+    """Redirect to Twitter login."""
+    authorization_url = oauth2_user_handler.get_authorization_url()
+    return redirect(authorization_url)
+
+@app.route("/callback")
+def callback():
+    """Handle OAuth callback."""
+    code = request.args.get("code")
+    state = request.args.get("state")
+    try:
+        oauth2_user_handler.fetch_token(code=code)
+        access_token = oauth2_user_handler.access_token
+        refresh_token = oauth2_user_handler.refresh_token
+        return jsonify({
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        })
+    except Exception as e:
+        return f"Error during callback: {str(e)}", 400
+
+
 def start_bot():
+    """Start the stream."""
     stream = MyStream(bearer_token=BEARER_TOKEN)
     try:
         # Clear existing rules to prevent conflicts
@@ -109,4 +151,5 @@ def start_bot():
 
 
 if __name__ == "__main__":
-    start_bot()
+    # Run Flask server for OAuth2
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
