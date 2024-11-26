@@ -2,8 +2,8 @@ name: Auto Tweet Bot
 
 on:
   schedule:
-    - cron: "0 9,15,21 * * *"  # Runs at 9 AM, 3 PM, and 9 PM daily
-  workflow_dispatch: # Allows manual runs
+    - cron: "*/20 * * * *"  # Runs every 20 minutes
+  workflow_dispatch:  # Allows manual runs
 
 jobs:
   run-bot:
@@ -24,32 +24,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt  # Ensure dependencies are up-to-date
+          pip install -r requirements.txt
 
-      # Step 4: Validate Twitter API Authentication
-      - name: Validate Twitter API Authentication
-        run: |
-          echo "Testing Twitter API Authentication..."
-          python -c "import tweepy; client = tweepy.Client(consumer_key='${{ secrets.API_KEY }}', consumer_secret='${{ secrets.API_SECRET }}', access_token='${{ secrets.ACCESS_TOKEN }}', access_token_secret='${{ secrets.ACCESS_SECRET }}'); print('DEBUG: Successfully authenticated with Twitter API.')"
-
-      # Step 5: Run the bot script
+      # Step 4: Run the bot script
       - name: Run bot
-        run: |
-          echo "Debugging Environment Variables..."
-          echo "API_KEY: ${{ secrets.API_KEY }}"
-          echo "API_SECRET: ${{ secrets.API_SECRET }}"
-          echo "ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}"
-          echo "ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}"
-          echo "BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}"
-          echo "OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}"
-          python autotweet.py || echo "Bot encountered an issue, check logs"
-
-
-      # Step 6: Log workflow execution
-      - name: Log workflow execution
-        run: |
-          echo "Bot workflow executed successfully at $(date)"
-
-      # Step 7: Log bot output (optional debugging)
-      - name: Log bot output
-        run: cat autotweet.log || echo "No log file found"
+        run: python autotweet.py
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+          BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

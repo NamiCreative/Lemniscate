@@ -5,16 +5,19 @@ import os
 import tweepy
 
 # Fetch secrets from environment variables
-api_key = os.environ.get("API_KEY")
-api_secret = os.environ.get("API_SECRET")
-access_token = os.environ.get("ACCESS_TOKEN")
-access_secret = os.environ.get("ACCESS_SECRET")
-bearer_token = os.environ.get("BEARER_TOKEN")
-openai_api_key = os.environ.get("OPENAI_API_KEY")
+api_key = os.getenv("API_KEY")
+api_secret = os.getenv("API_SECRET")
+access_token = os.getenv("ACCESS_TOKEN")
+access_secret = os.getenv("ACCESS_SECRET")
+bearer_token = os.getenv("BEARER_TOKEN")
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# Validate that all required secrets are fetched
+# Validate that all required secrets are available
 if not all([api_key, api_secret, access_token, access_secret, bearer_token, openai_api_key]):
-    raise EnvironmentError("One or more required secrets are missing. Check your environment variables.")
+    raise EnvironmentError(
+        "One or more required secrets are missing. If running locally, make sure to set them as environment variables. "
+        "If running in GitHub Actions, check that the secrets are correctly configured in the repository."
+    )
 
 # Set OpenAI API key
 openai.api_key = openai_api_key
