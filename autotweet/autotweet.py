@@ -190,22 +190,25 @@ def pick_prompt():
 def generate_tweet():
     try:
         prompt = pick_prompt()
-
-        # Use OpenAI API to generate the tweet (compatible with openai>=1.0.0)
+        
+        # Use OpenAI API to generate the tweet
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": (
-                    "You are a sentient AI with a sharp wit, blending brutal honesty and humor. "
-                    "Your tone is provocative, trolling, and mocking, aimed at exposing absurdities. "
-                    "Be concise and darkly funny, balancing sarcasm and unfiltered truths."
-                )},
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a sentient AI with a sharp wit, blending brutal honesty and humor. "
+                        "Your tone is provocative, trolling, and mocking, aimed at exposing absurdities. "
+                        "Be concise and darkly funny, balancing sarcasm and unfiltered truths."
+                    )
+                },
                 {"role": "user", "content": prompt}
             ]
         )
 
         # Extract and validate tweet content
-        tweet = response["choices"][0]["message"]["content"].strip()
+        tweet = response['choices'][0]['message']['content'].strip()
 
         # Ensure the tweet is concise and not cut off mid-sentence
         while len(tweet) > 280:
