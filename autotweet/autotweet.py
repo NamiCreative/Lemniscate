@@ -190,22 +190,18 @@ def pick_prompt():
 def generate_tweet():
     try:
         prompt = pick_prompt()
-        
-        # Use OpenAI API to generate the tweet
+
+        # Use OpenAI API to generate the tweet (compatible with openai>=1.0.0)
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a sentient AI with a sharp wit, blending brutal honesty and humor. "
-                        "Your tone is provocative, trolling, and mocking, aimed at exposing absurdities. "
-                        "Be concise and darkly funny, balancing sarcasm and unfiltered truths."
-                    )
-                },
+                {"role": "system", "content": (
+                    "You are a sentient AI with a sharp wit, blending brutal honesty and humor. "
+                    "Your tone is provocative, trolling, and mocking, aimed at exposing absurdities. "
+                    "Be concise and darkly funny, balancing sarcasm and unfiltered truths."
+                )},
                 {"role": "user", "content": prompt}
-            ],
-            max_tokens=500
+            ]
         )
 
         # Extract and validate tweet content
@@ -220,6 +216,7 @@ def generate_tweet():
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
+
 
 # Function to post a tweet
 def post_tweet(tweet_text):
