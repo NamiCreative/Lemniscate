@@ -4,13 +4,18 @@ import random
 import os
 import tweepy
 
-# Directly use known values to test API authentication
-api_key = "faARZaXZC8B766pzRlGcwoqcQ"
-api_secret = "U2CEVXOgQsX1Psv0VinrFgdtql6qCwTn1sXCvS9fygLHfey92p"
-access_token = "1859184398890926081-AnuFxWYbCAqZiXczucO5ZOUQXYDPpz"
-access_secret = "3PikT9gNP1uYqtc0kDi1uvR66kJU3cBG28S6jW6nOx4wY"
-bearer_token = "AAAAAAAAAAAAAAAAAAAAABNSxAEAAAAAp2S3Y%2Bi9s3LtHJHMKrl6NdbFxoU%3DufAhmqm3rn56D37xYBBsWlZCdFu9JvktGdMxKkJfp3ULrjOymz"
-openai_api_key = "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"
+# Fetch secrets from environment variables
+api_key = os.environ.get("API_KEY")
+api_secret = os.environ.get("API_SECRET")
+access_token = os.environ.get("ACCESS_TOKEN")
+access_secret = os.environ.get("ACCESS_SECRET")
+bearer_token = os.environ.get("BEARER_TOKEN")
+openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+# Validate that all required secrets are fetched
+if not all([api_key, api_secret, access_token, access_secret, bearer_token, openai_api_key]):
+    raise EnvironmentError("One or more required secrets are missing. Check your environment variables.")
+
 # Set OpenAI API key
 openai.api_key = openai_api_key
 
