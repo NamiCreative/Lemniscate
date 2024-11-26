@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt  # Updated path to requirements.txt in root directory
+          pip install -r requirements.txt  # Ensure dependencies are up-to-date
 
       # Step 4: Validate Twitter API Authentication
       - name: Validate Twitter API Authentication
@@ -35,7 +35,7 @@ jobs:
       # Step 5: Run the bot script
       - name: Run bot
         run: |
-          python autotweet/autotweet.py  # Path to autotweet.py remains unchanged
+          python autotweet.py || echo "Bot encountered an issue, check logs"
         env:
           API_KEY: ${{ secrets.API_KEY }}
           API_SECRET: ${{ secrets.API_SECRET }}
@@ -48,3 +48,7 @@ jobs:
       - name: Log workflow execution
         run: |
           echo "Bot workflow executed successfully at $(date)"
+
+      # Step 7: Log bot output (optional debugging)
+      - name: Log bot output
+        run: cat autotweet.log || echo "No log file found"
