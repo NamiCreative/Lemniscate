@@ -224,13 +224,23 @@ def generate_tweet():
 # Function to post a tweet
 def post_tweet(tweet_text):
     try:
-        client.create_tweet(text=tweet_text)
-        print(f"Tweeted: {tweet_text}")
+        response = client.create_tweet(text=tweet_text)
+        print(f"Tweet posted successfully: {response}")
     except tweepy.TweepyException as e:
         print(f"Error posting tweet: {e}")
 
+
 # Main logic
 if __name__ == "__main__":
-    tweet = generate_tweet()
-    if tweet:
-        post_tweet(tweet)
+    print("Starting the bot...")
+    try:
+        print("Generating tweet...")
+        tweet = generate_tweet()
+        if tweet:
+            print(f"Generated tweet: {tweet}")
+            print("Attempting to post tweet...")
+            post_tweet(tweet)
+        else:
+            print("No tweet generated.")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
