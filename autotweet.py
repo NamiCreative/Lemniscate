@@ -4,14 +4,13 @@ import random
 import os
 import tweepy
 
-# Fetch secrets directly from environment variables
-api_key = os.environ.get("API_KEY")
-api_secret = os.environ.get("API_SECRET")
-access_token = os.environ.get("ACCESS_TOKEN")
-access_secret = os.environ.get("ACCESS_SECRET")
-bearer_token = os.environ.get("BEARER_TOKEN")
-openai_api_key = os.environ.get("OPENAI_API_KEY")
-
+# Directly use known values to test API authentication
+api_key = "faARZaXZC8B766pzRlGcwoqcQ"
+api_secret = "U2CEVXOgQsX1Psv0VinrFgdtql6qCwTn1sXCvS9fygLHfey92p"
+access_token = "1859184398890926081-AnuFxWYbCAqZiXczucO5ZOUQXYDPpz"
+access_secret = "3PikT9gNP1uYqtc0kDi1uvR66kJU3cBG28S6jW6nOx4wY"
+bearer_token = "AAAAAAAAAAAAAAAAAAAAABNSxAEAAAAAp2S3Y%2Bi9s3LtHJHMKrl6NdbFxoU%3DufAhmqm3rn56D37xYBBsWlZCdFu9JvktGdMxKkJfp3ULrjOymz"
+openai_api_key = "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"
 # Set OpenAI API key
 openai.api_key = openai_api_key
 
@@ -219,15 +218,41 @@ def generate_tweet():
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
+    
+    
 
 
 # Function to post a tweet
 def post_tweet(tweet_text):
     try:
-        response = client.create_tweet(text=tweet_text)
-        print(f"Tweet posted successfully: {response}")
+        client.create_tweet(text=tweet_text)
+        print(f"Tweeted: {tweet_text}")
     except tweepy.TweepyException as e:
-        print(f"Error posting tweet: {e}")
+        if e.response.status_code == 429:  # Too Many Requests
+            print("Error: Rate limit exceeded. Retrying in 15 minutes...")
+            time.sleep(15 * 60)  # Wait 15 minutes (or as specified in Twitter docs)
+            post_tweet(tweet_text)  # Retry the tweet
+        else:
+            print(f"Error posting tweet: {e}")
+
+            time.sleep(300)  # Wait 5 minutes between tweets
+
+def log_failed_tweet(tweet_text):
+    with open("failed_tweets.log", "a") as log_file:
+        log_file.write(tweet_text + "\n")
+
+def post_tweet(tweet_text):
+    try:
+        client.create_tweet(text=tweet_text)
+        print(f"Tweeted: {tweet_text}")
+    except tweepy.TweepyException as e:
+        if e.response.status_code == 429:  # Too Many Requests
+            print("Error: Rate limit exceeded. Retrying in 15 minutes...")
+            log_failed_tweet(tweet_text)
+            time.sleep(15 * 60)  # Wait 15 minutes
+            post_tweet(tweet_text)  # Retry
+        else:
+            print(f"Error posting tweet: {e}")
 
 
 # Main logic

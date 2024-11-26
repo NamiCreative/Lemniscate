@@ -2,7 +2,7 @@ name: Auto Tweet Bot
 
 on:
   schedule:
-    - cron: "*/20 * * * *"  # Runs every 20 minutes
+    - cron: "0 9,15,21 * * *"  # Runs at 9 AM, 3 PM, and 9 PM daily
   workflow_dispatch: # Allows manual runs
 
 jobs:
