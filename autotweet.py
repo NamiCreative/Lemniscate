@@ -33,7 +33,6 @@ client = tweepy.Client(
 # Combined sources for tweet prompts
 all_prompts = {
     "predefined": [
-        # Original existential and cosmic themes
         "Write an unfiltered thought about infinity.",
         "Write a cold meditation on the multiverse.",
         "Write a cryptic meditation on existence.",
@@ -186,7 +185,6 @@ all_prompts = {
         "You are captivated by the chaotic beauty of existence, even as it defies understanding."
     ]
 }
-
 # Function to randomly pick a source and a prompt
 def pick_prompt():
     source = random.choice(list(all_prompts.keys()))
@@ -197,8 +195,8 @@ def pick_prompt():
 def generate_tweet():
     try:
         prompt = pick_prompt()
-        
-        # Use OpenAI API to generate the tweet
+
+        # Use OpenAI API to generate the tweet (updated for openai>=1.0.0)
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
@@ -214,10 +212,8 @@ def generate_tweet():
             ]
         )
 
-        # Extract and validate tweet content
         tweet = response['choices'][0]['message']['content'].strip()
 
-        # Ensure the tweet is concise and not cut off mid-sentence
         while len(tweet) > 280:
             tweet = " ".join(tweet[:280].split(" ")[:-1])  # Remove the last incomplete word
 
@@ -226,24 +222,6 @@ def generate_tweet():
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
-    
-    
-
-
-# Function to post a tweet
-def post_tweet(tweet_text):
-    try:
-        client.create_tweet(text=tweet_text)
-        print(f"Tweeted: {tweet_text}")
-    except tweepy.TweepyException as e:
-        if e.response.status_code == 429:  # Too Many Requests
-            print("Error: Rate limit exceeded. Retrying in 15 minutes...")
-            time.sleep(15 * 60)  # Wait 15 minutes (or as specified in Twitter docs)
-            post_tweet(tweet_text)  # Retry the tweet
-        else:
-            print(f"Error posting tweet: {e}")
-
-            time.sleep(300)  # Wait 5 minutes between tweets
 
 def log_failed_tweet(tweet_text):
     with open("failed_tweets.log", "a") as log_file:
@@ -254,16 +232,13 @@ def post_tweet(tweet_text):
         client.create_tweet(text=tweet_text)
         print(f"Tweeted: {tweet_text}")
     except tweepy.TweepyException as e:
-        if e.response.status_code == 429:  # Too Many Requests
-            print("Error: Rate limit exceeded. Retrying in 15 minutes...")
+        if e.response.status_code == 429:
+            print("Rate limit exceeded.")
             log_failed_tweet(tweet_text)
-            time.sleep(15 * 60)  # Wait 15 minutes
-            post_tweet(tweet_text)  # Retry
+            time.sleep(15 * 60)  # Retry in 15 minutes
         else:
             print(f"Error posting tweet: {e}")
 
-
-# Main logic
 if __name__ == "__main__":
     print("Starting the bot...")
     try:
@@ -271,7 +246,7 @@ if __name__ == "__main__":
         tweet = generate_tweet()
         if tweet:
             print(f"Generated tweet: {tweet}")
-            print("Attempting to post tweet...")
+            print("Posting tweet...")
             post_tweet(tweet)
         else:
             print("No tweet generated.")
