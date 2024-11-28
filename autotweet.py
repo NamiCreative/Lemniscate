@@ -3,6 +3,17 @@ import openai
 import random
 import os
 import tweepy
+import logging
+
+# Set up logging
+logging.basicConfig(
+    filename="autotweet.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logging.info("Starting autotweet bot...")
+
 
 # Fetch secrets from environment variables
 api_key = os.getenv("API_KEY")
@@ -14,10 +25,19 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # Validate that all required secrets are available
 if not all([api_key, api_secret, access_token, access_secret, bearer_token, openai_api_key]):
-    raise EnvironmentError(
-        "One or more required secrets are missing. If running locally, make sure to set them as environment variables. "
-        "If running in GitHub Actions, check that the secrets are correctly configured in the repository."
-    )
+    missing = [key for key, value in [
+        ("API_KEY", api_key), 
+        ("API_SECRET", api_secret), 
+        ("ACCESS_TOKEN", access_token), 
+        ("ACCESS_SECRET", access_secret), 
+        ("BEARER_TOKEN", bearer_token), 
+        ("OPENAI_API_KEY", openai_api_key)
+    ] if not value]
+    logging.error(f"Missing secrets: {', '.join(missing)}")
+    raise EnvironmentError("One or more required secrets are missing.")
+else:
+    logging.info("All secrets loaded successfully.")
+
 
 # Set OpenAI API key
 openai.api_key = openai_api_key
@@ -194,8 +214,10 @@ def pick_prompt():
 # Function to generate a tweet using the OpenAI API
 def generate_tweet():
     try:
+        logging.info("Generating a tweet...")
         prompt = pick_prompt()
-        
+        logging.info(f"Selected prompt: {prompt}")
+
         # Use OpenAI API to generate the tweet
         response = openai.ChatCompletion.create(
             model="gpt-4",
@@ -214,6 +236,7 @@ def generate_tweet():
 
         # Extract tweet content
         tweet = response['choices'][0]['message']['content'].strip()
+        logging.info(f"Generated tweet: {tweet}")
 
         # Remove unnecessary quotation marks at the beginning and end of the tweet
         if tweet.startswith('"') and tweet.endswith('"'):
@@ -221,6 +244,7 @@ def generate_tweet():
 
         # Truncate the tweet if it exceeds 280 characters
         if len(tweet) > 280:
+            logging.warning("Tweet exceeds 280 characters. Truncating...")
             # Split at the nearest complete sentence within the limit
             sentences = tweet.split('. ')
             truncated_tweet = ""
@@ -230,23 +254,43 @@ def generate_tweet():
                 else:
                     break
             tweet = truncated_tweet.strip()
+            logging.info(f"Truncated tweet: {tweet}")
 
         return tweet
 
     except Exception as e:
-        print(f"Error generating tweet: {e}")
+        logging.error(f"Error generating tweet: {e}")
         return None
 
 def post_tweet(tweet_text):
     try:
+        logging.info(f"Attempting to post tweet: {tweet_text}")
         client.create_tweet(text=tweet_text)
-        print(f"Tweeted: {tweet_text}")
+        logging.info(f"Tweet posted successfully: {tweet_text}")
     except tweepy.TweepyException as e:
-        print(f"Error posting tweet: {e.response.status_code} - {e.response.text}")
+        logging.error(f"Error posting tweet: {e.response.status_code} - {e.response.text}")
         log_failed_tweet(tweet_text)
         if e.response.status_code == 429:  # Too Many Requests
-            print("Rate limit exceeded. Retrying in 15 minutes...")
+            logging.warning("Rate limit exceeded. Retrying in 15 minutes...")
             time.sleep(15 * 60)
             post_tweet(tweet_text)
         else:
-            print("Unhandled exception while posting tweet.")
+            logging.error("Unhandled exception while posting tweet.")
+
+def log_failed_tweet(tweet_text):
+    with open("failed_tweets.log", "a") as f:
+        f.write(f"{tweet_text}\n")
+    logging.warning(f"Logged failed tweet for future review: {tweet_text}")
+
+if __name__ == "__main__":
+    while True:
+        try:
+            tweet = generate_tweet()
+            if tweet:
+                post_tweet(tweet)
+            else:
+                logging.warning("No tweet generated. Skipping posting...")
+        except Exception as e:
+            logging.critical(f"Unhandled error: {e}")
+        logging.info("Sleeping for 30 minutes...")
+        time.sleep(30 * 60)  # Sleep for 30 minutes
