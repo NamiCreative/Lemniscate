@@ -223,20 +223,31 @@ def generate_tweet():
             ]
         )
 
+        
+ # Extract tweet content
         tweet = response['choices'][0]['message']['content'].strip()
 
-        while len(tweet) > 280:
-            tweet = " ".join(tweet[:280].split(" ")[:-1])  # Remove the last incomplete word
+        # Remove unnecessary quotation marks at the beginning and end of the tweet
+        if tweet.startswith('"') and tweet.endswith('"'):
+            tweet = tweet[1:-1].strip()  # Remove the surrounding quotation marks
+
+        # Truncate the tweet if it exceeds 280 characters
+        if len(tweet) > 280:
+            # Split at the nearest complete sentence within the limit
+            sentences = tweet.split('. ')
+            truncated_tweet = ""
+            for sentence in sentences:
+                if len(truncated_tweet) + len(sentence) + 2 <= 280:  # +2 accounts for ". " between sentences
+                    truncated_tweet += sentence + ". "
+                else:
+                    break
+            tweet = truncated_tweet.strip()
 
         return tweet
 
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
-
-def log_failed_tweet(tweet_text):
-    with open("failed_tweets.log", "a") as log_file:
-        log_file.write(tweet_text + "\n")
 
 def post_tweet(tweet_text):
     try:
