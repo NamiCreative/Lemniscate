@@ -26,9 +26,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Debug environment variables
-      - name: Debug Environment Variables
-        run: env
+      # Step 4: Validate secrets
+      - name: Validate Environment Variables
+        run: |
+          echo "Validating secrets..."
+          echo "API_KEY: ${API_KEY:+"exists"}"
+          echo "API_SECRET: ${API_SECRET:+"exists"}"
+          echo "ACCESS_TOKEN: ${ACCESS_TOKEN:+"exists"}"
+          echo "ACCESS_SECRET: ${ACCESS_SECRET:+"exists"}"
+          echo "BEARER_TOKEN: ${BEARER_TOKEN:+"exists"}"
+          echo "OPENAI_API_KEY: ${OPENAI_API_KEY:+"exists"}"
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+          BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       # Step 5: Run the bot script
       - name: Run bot
