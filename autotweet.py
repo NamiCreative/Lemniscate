@@ -23,6 +23,14 @@ access_secret = os.getenv("ACCESS_SECRET")
 bearer_token = os.getenv("BEARER_TOKEN")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
+print("API_KEY:", os.getenv("API_KEY"))
+print("API_SECRET:", os.getenv("API_SECRET"))
+print("ACCESS_TOKEN:", os.getenv("ACCESS_TOKEN"))
+print("ACCESS_SECRET:", os.getenv("ACCESS_SECRET"))
+print("BEARER_TOKEN:", os.getenv("BEARER_TOKEN"))
+print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
+
+
 # Validate that all required secrets are available
 if not all([api_key, api_secret, access_token, access_secret, bearer_token, openai_api_key]):
     missing = [key for key, value in [
