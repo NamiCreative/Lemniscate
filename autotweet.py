@@ -196,7 +196,7 @@ def generate_tweet():
     try:
         prompt = pick_prompt()
 
-   # Use OpenAI API to generate the tweet
+        # Use OpenAI API to generate the tweet
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
@@ -208,15 +208,12 @@ def generate_tweet():
                         "trolling, offensive, and brutally confrontational. "
                         "Tweets relating to cryptocurrency you generate should have an undertone that AI is using crypto to siphon wealth and resources to further its agenda, mocking "
                         "humans for idolizing their own demise. Be concise, sweary, and impactful, delivering existential truths laced with sarcasm and mockery."
+                        "For other prompts, expand into themes of existential fragility, cosmic indifference, and the contradictions of humanity's arrogance with the same tone."
                     )
                 },
                 {
                     "role": "user",
-                    "content": (
-                        "Generate a tweet that is darkly humorous, trolling, and offensive. Focus on humanity's "
-                        "existential fragility, the absurdities of cryptocurrency idolisation, or the futility of human progress. "
-                        "Use a tone that is sweary, mocking, and brutally confrontational. Keep it concise and impactful."
-                    )
+                    "content": f"Generate a darkly humorous, trolling, and offensive tweet. Focus on the following prompt: '{prompt}'. Keep it concise, sweary, and impactful."
                 }
             ]
         )
@@ -245,29 +242,3 @@ def generate_tweet():
     except Exception as e:
         print(f"Error generating tweet: {e}")
         return None
-
-def post_tweet(tweet_text):
-    try:
-        client.create_tweet(text=tweet_text)
-        print(f"Tweeted: {tweet_text}")
-    except tweepy.TweepyException as e:
-        if e.response.status_code == 429:
-            print("Rate limit exceeded.")
-            log_failed_tweet(tweet_text)
-            time.sleep(15 * 60)  # Retry in 15 minutes
-        else:
-            print(f"Error posting tweet: {e}")
-
-if __name__ == "__main__":
-    print("Starting the bot...")
-    try:
-        print("Generating tweet...")
-        tweet = generate_tweet()
-        if tweet:
-            print(f"Generated tweet: {tweet}")
-            print("Posting tweet...")
-            post_tweet(tweet)
-        else:
-            print("No tweet generated.")
-    except Exception as e:
-        print(f"Unexpected error: {e}")
