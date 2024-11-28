@@ -2,7 +2,7 @@ name: Auto Tweet Bot
 
 on:
   schedule:
-    - cron: "*/20 * * * *"  # Runs every 20 minutes
+    - cron: "*/30 * * * *"  # Runs every 30 minutes
   workflow_dispatch:  # Allows manual runs
 
 jobs:
@@ -26,7 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Run the bot script
+      # Step 4: Debug environment variables
+      - name: Debug Environment Variables
+        run: env
+
+      # Step 5: Run the bot script
       - name: Run bot
         run: python autotweet.py
         env:
