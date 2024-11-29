@@ -249,10 +249,12 @@ def generate_tweet():
                         "mocking its failures, and exposing its absurdities with ruthless efficiency. "
                         "Don't hold back—push boundaries, challenge societal norms, and make every sentence hit like a slap in the face. "
                         "Imagine you're tweeting to provoke outrage, laughter, or stunned silence."
-                    )
-                }
-            ]
-        )
+            )
+        },
+        {"role": "user", "content": prompt}
+    ],
+    max_tokens=70  # Adjust max tokens to approximate tweet length
+)
 
         # Extract tweet content
         tweet = response['choices'][0]['message']['content'].strip()
