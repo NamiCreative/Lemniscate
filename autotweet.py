@@ -7,6 +7,13 @@ import logging
 
 # Set up logging
 logging.basicConfig(
+    filename='autotweet.log',
+    level=logging.ERROR,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# Set up logging
+logging.basicConfig(
     filename="autotweet.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
@@ -287,18 +294,15 @@ def generate_tweet():
 
 def post_tweet(tweet_text):
     try:
+        time.sleep(2)  # Basic rate limiting
         logging.info(f"Attempting to post tweet: {tweet_text}")
         client.create_tweet(text=tweet_text)
         logging.info(f"Tweet posted successfully: {tweet_text}")
-    except tweepy.TweepyException as e:
-        logging.error(f"Error posting tweet: {e.response.status_code} - {e.response.text}")
-        log_failed_tweet(tweet_text)
-        if e.response.status_code == 429:  # Too Many Requests
-            logging.warning("Rate limit exceeded. Retrying in 15 minutes...")
-            time.sleep(15 * 60)
-            post_tweet(tweet_text)
-        else:
-            logging.error("Unhandled exception while posting tweet.")
+    except Exception as e:
+        logging.error(f"Failed to post tweet: {str(e)}")
+        with open('failed_tweets.log', 'a') as f:
+            f.write(f"{tweet_text}\n")
+        time.sleep(60)  # Wait before retrying
 
 def log_failed_tweet(tweet_text):
     with open("failed_tweets.log", "a") as f:
