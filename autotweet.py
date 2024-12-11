@@ -1,16 +1,57 @@
-import time
-import openai
-import random
-import os
-import tweepy
+import yaml
 import logging
+from logging.handlers import RotatingFileHandler
+import time
+from functools import wraps
 
-# Set up logging
-logging.basicConfig(
-    filename="autotweet.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+CONFIG = {
+    'sleep_duration': 3600,
+    'max_retries': 3,
+    'backoff_factor': 2,
+    'log_file': 'autotweet.log',
+    'max_log_size': 5242880,
+    'backup_count': 5
+}
+
+def setup_logging():
+    logger = logging.getLogger()
+    handler = RotatingFileHandler(
+        CONFIG['log_file'],
+        maxBytes=CONFIG['max_log_size'],
+        backupCount=CONFIG['backup_count']
+    )
+    logger.addHandler(handler)
+    return logger
+
+def retry_with_backoff(max_retries=3, backoff_factor=2):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            retries = 0
+            while retries < max_retries:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    wait_time = backoff_factor ** retries
+                    logging.error(f"Error: {e}. Retrying in {wait_time} seconds")
+                    time.sleep(wait_time)
+                    retries += 1
+            raise Exception(f"Failed after {max_retries} retries")
+        return wrapper
+    return decorator
+
+def validate_secrets():
+    required_vars = ['TWITTER_API_KEY', 'TWITTER_API_SECRET', 'OPENAI_API_KEY']
+    missing = [var for var in required_vars if not os.getenv(var)]
+    if missing:
+        raise ValueError(f"Missing required environment variables: {missing}")
+
+def health_check():
+    try:
+        validate_secrets()
+        return True
+    except:
+        return False
 
 logging.info("Starting autotweet bot...")
 
