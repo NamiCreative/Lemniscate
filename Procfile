@@ -1,1 +1,1 @@
-worker: python autotweet.py
+worker: python src/main.py
