@@ -284,6 +284,36 @@ def clean_tweet_text(tweet):
     
     return tweet.strip()
 
+class AutoTweet:
+    def __init__(self):
+        # Add to existing initialization
+        self.tweet_memory = TweetMemory()
+        self.personality = PersonalityManager()
+
+    def generate_tweet(self):
+        try:
+            tweet = super().generate_tweet()  # Or however the original tweet is generated
+            retry_count = 0
+            while self.tweet_memory.check_similarity(tweet) and retry_count < 3:
+                tweet = super().generate_tweet()
+                retry_count += 1
+            self.tweet_memory.add_tweet(tweet)
+            self.personality.update_mood()
+            return tweet
+        except Exception as e:
+            logger.error(f"Error during tweet generation: {str(e)}")
+            raise
+
+    def post_tweet(self):
+        try:
+            tweet = self.generate_tweet()
+            # Existing posting logic
+        except Exception as e:
+            logger.error(f"Failed to post tweet: {str(e)}")
+            with open("failed_tweets.log", "a") as f:
+                f.write(f"{tweet}\n")
+            raise
+
 def generate_tweet():
     try:
         logging.info("Generating a tweet...")
