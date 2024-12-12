@@ -1,9 +1,10 @@
 name: Auto Tweet Bot
 
+# In .github/workflows/bot.yml, modify the cron schedule
 on:
   schedule:
-    - cron: "*/30 * * * *"  # Runs every 30 minutes
-  workflow_dispatch:  # Allows manual runs
+    - cron: "0 */1 * * *"  # Run every 1 hour instead of every 30 minutes
+  workflow_dispatch:
 
 jobs:
   run-bot:
