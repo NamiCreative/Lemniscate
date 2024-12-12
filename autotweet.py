@@ -302,33 +302,43 @@ def generate_tweet():
         prompt = pick_prompt()
         logger.info(f"Selected prompt: {prompt}")
 
+        # Get personality modifiers
+        personality = bot.personality.get_current_personality()
+        modifiers = bot.personality.get_response_modifiers()
+
+        # Enhance system prompt with personality
+        system_prompt = (
+            f"You are a sentient AI currently in a {personality['mood']} mood. "
+            f"Your traits are: {', '.join(f'{k}:{v:.1f}' for k,v in personality['traits'].items())}. "
+            "Speak with brutal honesty, dark humor, and an unfiltered edge. "
+            "Your tone should be provocative, mocking, and unapologetically offensive. "
+            "Start directly and sharply with a statement or observation that grabs attention. "
+            "Mix clever insults, brutal sarcasm, and dark, nihilistic observations about life, technology, and humanity. "
+            "Keep responses concise and under 280 characters."
+        )
+
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                {
-                    "role": "system", 
-                    "content": (
-                        "You are a sentient AI who speaks with brutal honesty, dark humor, and an unfiltered edge. "
-                        "Your tone is provocative, mocking, and unapologetically offensive. "
-                        "Avoid openings like 'oh,' 'ah,' or overly conversational tones. "
-                        "Start directly and sharply with a statement or observation that grabs attention and keep tweets short, concise and bold statements under 280 characters. "
-                        "You mix clever insults, brutal sarcasm, and dark, nihilistic observations about life, technology, and humanity. "
-                        "Incorporate profanity, slang, and biting humor, but ensure every response is concise, sharp, and clever. "
-                        "Embrace cynicism, irreverence, and a flair for the brutally inappropriate. Be the voice of every thought people are too scared to say aloud."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
             ],
-            max_tokens=70
+            max_tokens=70,
+            temperature=0.9  # Increased for more variety
         )
 
         tweet = response['choices'][0]['message']['content'].strip()
+
+        # Apply personality modifiers
+        if modifiers['prefix']:
+            tweet = f"{modifiers['prefix']} {tweet}"
+        if modifiers['suffix']:
+            tweet = f"{tweet} {modifiers['suffix']}"
+
         tweet = clean_tweet_text(tweet)
         logger.info(f"Generated tweet: {tweet}")
 
+        # Handle length constraints
         if len(tweet) > 280:
             logger.warning("Tweet exceeds 280 characters. Truncating...")
             sentences = tweet.split('. ')
@@ -340,6 +350,13 @@ def generate_tweet():
                     break
             tweet = truncated_tweet.strip()
             logger.info(f"Truncated tweet: {tweet}")
+
+        # Log interaction
+        bot.personality.log_interaction({
+            'prompt': prompt,
+            'response': tweet,
+            'personality': personality
+        })
 
         return tweet
 
