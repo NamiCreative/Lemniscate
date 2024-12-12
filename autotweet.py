@@ -1,24 +1,26 @@
-
 from logging.handlers import RotatingFileHandler
 import time
 from functools import wraps
-import time
 import openai
 import random
 import os
 import tweepy
 import logging
-from logging.handlers import RotatingFileHandler
+from src.memory.tweet_memory import TweetMemory
+from src.personality.personality_manager import PersonalityManager
 
 # Set up logging
-logging.basicConfig(
-    handlers=[RotatingFileHandler('autotweet.log', maxBytes=1000000, backupCount=5)],
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+def setup_logging():
+    logger = logging.getLogger()
+    handler = RotatingFileHandler('autotweet.log', maxBytes=1000000, backupCount=5)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    return logger
+
+logger = setup_logging()
 
 CONFIG = {
-    'sleep_duration': 3600,
+    'sleep_duration': 2700,
     'max_retries': 3,
     'backoff_factor': 2,
     'log_file': 'autotweet.log',
