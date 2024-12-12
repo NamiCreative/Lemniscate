@@ -1,6 +1,5 @@
-tweepy==4.14.0
-openai==0.27.8
-python-dotenv==1.0.0
-pyyaml>=6.0
-python-logging>=0.4.9
-python-dateutil>=2.8.2
+     tweepy==4.14.0
+     openai==0.27.8
+     python-dotenv==1.0.0
+     pyyaml>=6.0
+     python-dateutil>=2.8.2
