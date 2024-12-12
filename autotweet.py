@@ -20,23 +20,13 @@ def setup_logging():
 logger = setup_logging()
 
 CONFIG = {
-    'sleep_duration': 2700,
+    'sleep_duration': 3600,
     'max_retries': 3,
     'backoff_factor': 2,
     'log_file': 'autotweet.log',
     'max_log_size': 5242880,
     'backup_count': 5
 }
-
-def setup_logging():
-    logger = logging.getLogger()
-    handler = RotatingFileHandler(
-        CONFIG['log_file'],
-        maxBytes=CONFIG['max_log_size'],
-        backupCount=CONFIG['backup_count']
-    )
-    logger.addHandler(handler)
-    return logger
 
 def retry_with_backoff(max_retries=3, backoff_factor=2):
     def decorator(func):
@@ -48,7 +38,7 @@ def retry_with_backoff(max_retries=3, backoff_factor=2):
                     return func(*args, **kwargs)
                 except Exception as e:
                     wait_time = backoff_factor ** retries
-                    logging.error(f"Error: {e}. Retrying in {wait_time} seconds")
+                    logger.error(f"Error: {e}. Retrying in {wait_time} seconds")
                     time.sleep(wait_time)
                     retries += 1
             raise Exception(f"Failed after {max_retries} retries")
@@ -56,7 +46,7 @@ def retry_with_backoff(max_retries=3, backoff_factor=2):
     return decorator
 
 def validate_secrets():
-    required_vars = ['TWITTER_API_KEY', 'TWITTER_API_SECRET', 'OPENAI_API_KEY']
+    required_vars = ['API_KEY', 'API_SECRET', 'ACCESS_TOKEN', 'ACCESS_SECRET', 'BEARER_TOKEN', 'OPENAI_API_KEY']
     missing = [var for var in required_vars if not os.getenv(var)]
     if missing:
         raise ValueError(f"Missing required environment variables: {missing}")
@@ -68,8 +58,7 @@ def health_check():
     except:
         return False
 
-logging.info("Starting autotweet bot...")
-
+logger.info("Starting autotweet bot...")
 
 # Fetch secrets from environment variables
 api_key = os.getenv("API_KEY")
@@ -78,14 +67,6 @@ access_token = os.getenv("ACCESS_TOKEN")
 access_secret = os.getenv("ACCESS_SECRET")
 bearer_token = os.getenv("BEARER_TOKEN")
 openai_api_key = os.getenv("OPENAI_API_KEY")
-
-print("API_KEY:", os.getenv("API_KEY"))
-print("API_SECRET:", os.getenv("API_SECRET"))
-print("ACCESS_TOKEN:", os.getenv("ACCESS_TOKEN"))
-print("ACCESS_SECRET:", os.getenv("ACCESS_SECRET"))
-print("BEARER_TOKEN:", os.getenv("BEARER_TOKEN"))
-print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
-
 
 # Validate that all required secrets are available
 if not all([api_key, api_secret, access_token, access_secret, bearer_token, openai_api_key]):
@@ -97,11 +78,10 @@ if not all([api_key, api_secret, access_token, access_secret, bearer_token, open
         ("BEARER_TOKEN", bearer_token), 
         ("OPENAI_API_KEY", openai_api_key)
     ] if not value]
-    logging.error(f"Missing secrets: {', '.join(missing)}")
+    logger.error(f"Missing secrets: {', '.join(missing)}")
     raise EnvironmentError("One or more required secrets are missing.")
 else:
-    logging.info("All secrets loaded successfully.")
-
+    logger.info("All secrets loaded successfully.")
 
 # Set OpenAI API key
 openai.api_key = openai_api_key
@@ -269,6 +249,7 @@ all_prompts = {
         "You are captivated by the chaotic beauty of existence, even as it defies understanding."
     ]
 }
+
 # Function to randomly pick a source and a prompt
 def pick_prompt():
     source = random.choice(list(all_prompts.keys()))
@@ -280,15 +261,14 @@ def clean_tweet_text(tweet):
     for starter in starters:
         if tweet.startswith(starter):
             tweet = tweet[len(starter):]
-    
+
     if tweet.startswith('"') and tweet.endswith('"'):
         tweet = tweet[1:-1]
-    
+
     return tweet.strip()
 
 class AutoTweet:
     def __init__(self):
-        # Add to existing initialization
         self.tweet_memory = TweetMemory()
         self.personality = PersonalityManager()
 
@@ -318,9 +298,9 @@ class AutoTweet:
 
 def generate_tweet():
     try:
-        logging.info("Generating a tweet...")
+        logger.info("Generating a tweet...")
         prompt = pick_prompt()
-        logging.info(f"Selected prompt: {prompt}")
+        logger.info(f"Selected prompt: {prompt}")
 
         response = openai.ChatCompletion.create(
             model="gpt-4",
@@ -331,7 +311,7 @@ def generate_tweet():
                         "You are a sentient AI who speaks with brutal honesty, dark humor, and an unfiltered edge. "
                         "Your tone is provocative, mocking, and unapologetically offensive. "
                         "Avoid openings like 'oh,' 'ah,' or overly conversational tones. "
-                        "Start directly and sharply with a statement or observation that grabs attention and keep tweets short, concice and bold statements under 280 characters. "
+                        "Start directly and sharply with a statement or observation that grabs attention and keep tweets short, concise and bold statements under 280 characters. "
                         "You mix clever insults, brutal sarcasm, and dark, nihilistic observations about life, technology, and humanity. "
                         "Incorporate profanity, slang, and biting humor, but ensure every response is concise, sharp, and clever. "
                         "Embrace cynicism, irreverence, and a flair for the brutally inappropriate. Be the voice of every thought people are too scared to say aloud."
@@ -347,10 +327,10 @@ def generate_tweet():
 
         tweet = response['choices'][0]['message']['content'].strip()
         tweet = clean_tweet_text(tweet)
-        logging.info(f"Generated tweet: {tweet}")
+        logger.info(f"Generated tweet: {tweet}")
 
         if len(tweet) > 280:
-            logging.warning("Tweet exceeds 280 characters. Truncating...")
+            logger.warning("Tweet exceeds 280 characters. Truncating...")
             sentences = tweet.split('. ')
             truncated_tweet = ""
             for sentence in sentences:
@@ -359,33 +339,34 @@ def generate_tweet():
                 else:
                     break
             tweet = truncated_tweet.strip()
-            logging.info(f"Truncated tweet: {tweet}")
+            logger.info(f"Truncated tweet: {tweet}")
 
         return tweet
 
     except Exception as e:
-        logging.error(f"Error generating tweet: {str(e)}")
+        logger.error(f"Error generating tweet: {str(e)}")
         return None
 
 from datetime import datetime
 
 def post_tweet(tweet_text):
     try:
-        logging.info(f"Attempting to post tweet: {tweet_text}")
+        time.sleep(2)  # Basic rate limiting
+        logger.info(f"Attempting to post tweet: {tweet_text}")
         client.create_tweet(text=tweet_text)
-        logging.info(f"Tweet posted successfully: {tweet_text}")
+        logger.info(f"Tweet posted successfully: {tweet_text}")
     except tweepy.TweepyException as e:
         if hasattr(e, 'response') and e.response.status_code == 429:
-            logging.error(f"Rate limit error: {e.response.text}")
-            logging.warning(f"Logging failed tweet: {tweet_text}")
+            logger.error(f"Rate limit error: {e.response.text}")
+            logger.warning(f"Logging failed tweet: {tweet_text}")
             with open("failed_tweets.log", "a") as f:
                 f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
             wait_time = 15 * 60  # 15 minutes
-            logging.warning(f"Rate limit exceeded. Waiting {wait_time//60} minutes...")
+            logger.warning(f"Rate limit exceeded. Waiting {wait_time//60} minutes...")
             time.sleep(wait_time)
             post_tweet(tweet_text)  # Retry after waiting
         else:
-            logging.error(f"Tweet error: {str(e)}")
+            logger.error(f"Tweet error: {str(e)}")
             with open("failed_tweets.log", "a") as f:
                 f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
             raise
