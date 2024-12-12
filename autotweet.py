@@ -15,6 +15,9 @@ logging.basicConfig(
     handlers=[RotatingFileHandler('autotweet.log', maxBytes=1000000, backupCount=5)],
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
+) main
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
 CONFIG = {
@@ -369,21 +372,22 @@ from datetime import datetime
 
 def post_tweet(tweet_text):
     try:
+        time.sleep(2)  # Basic rate limiting
         logging.info(f"Attempting to post tweet: {tweet_text}")
         client.create_tweet(text=tweet_text)
         logging.info(f"Tweet posted successfully: {tweet_text}")
-    except tweepy.TweepyException as e:
-        if hasattr(e, 'response') and e.response.status_code == 429:
-            logging.error(f"Rate limit error: {e.response.text}")
-            logging.warning(f"Logging failed tweet: {tweet_text}")
-            with open("failed_tweets.log", "a") as f:
-                f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
-            wait_time = 15 * 60  # 15 minutes
-            logging.warning(f"Rate limit exceeded. Waiting {wait_time//60} minutes...")
-            time.sleep(wait_time)
-            post_tweet(tweet_text)  # Retry after waiting
-        else:
-            logging.error(f"Tweet error: {str(e)}")
-            with open("failed_tweets.log", "a") as f:
-                f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
-            raise
+except tweepy.TweepyException as e:
+    if hasattr(e, 'response') and e.response.status_code == 429:
+        logging.error(f"Rate limit error: {e.response.text}")
+        logging.warning(f"Logging failed tweet: {tweet_text}")
+        with open("failed_tweets.log", "a") as f:
+            f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
+        wait_time = 15 * 60  # 15 minutes
+        logging.warning(f"Rate limit exceeded. Waiting {wait_time//60} minutes...")
+        time.sleep(wait_time)
+        post_tweet(tweet_text)  # Retry after waiting
+    else:
+        logging.error(f"Tweet error: {str(e)}")
+        with open("failed_tweets.log", "a") as f:
+            f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
+        raise
