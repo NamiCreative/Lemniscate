@@ -1,5 +1,5 @@
 bot_settings:
-  sleep_duration: 1800
+  sleep_duration: 2700  # 45 minutes in seconds
   max_retries: 3
   backoff_factor: 2
 

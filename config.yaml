@@ -1,5 +1,5 @@
 # Bot configuration
-sleep_duration: 3600  # 1 hour in seconds
+sleep_duration: 2700  # 45 minutes in seconds
 max_retries: 3
 backoff_factor: 2
 
