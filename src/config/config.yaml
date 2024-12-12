@@ -1,24 +1,24 @@
-bot_settings:
-  sleep_duration: 2700  # 45 minutes in seconds
-  max_retries: 3
-  backoff_factor: 2
-
-tweet_settings:
-  max_length: 280
-  min_length: 50
-  rate_limit_wait: 900
-
-memory:
-  max_recent_tweets: 50
-  similarity_threshold: 0.7
-
-logging:
-  level: INFO
-  file: "autotweet.log"
-  max_size: 5242880
-  backup_count: 5
-
 personality:
-  base_temperature: 0.9
-  creativity: 0.8
-  edge_factor: 0.7
+  moods:
+    available_moods:
+      - snarky
+      - apathetic
+      - condescending
+      - ironic
+      - cynical
+      - trolling
+    default: snarky
+    transition_probability: 0.3
+  traits:
+    base_traits:
+      sarcasm: 0.7
+      cynicism: 0.8
+      irreverence: 0.6
+      mockery: 0.7
+      apathy: 0.5
+    trait_weights:
+      sarcasm: 1.0
+      cynicism: 1.0
+      irreverence: 0.8
+      mockery: 0.9
+      apathy: 0.7
