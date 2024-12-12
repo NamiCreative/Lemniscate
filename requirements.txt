@@ -1,5 +1,6 @@
-tweepy>=4.12.1
-openai==0.28.0
-requests>=2.31.0
-python-twitter>=4.0.0
-logging>=0.5.1.2
+plaintext
+tweepy==4.14.0
+openai==0.27.8
+python-dotenv==1.0.0
+pyyaml==6.0.1
+python-logging>=0.4.9
