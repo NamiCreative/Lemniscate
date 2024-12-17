@@ -727,25 +727,23 @@ def generate_tweet():
         logger.error(f"Error generating tweet: {str(e)}")
         return None
 
-@retry_with_backoff(max_retries=3, backoff_factor=2)
+@retry_with_backoff(max_retries=5, backoff_factor=3)
 def post_tweet(tweet_text):
     try:
-        time.sleep(5)  # Basic rate limiting
+        time.sleep(5)
         logger.info(f"Attempting to post tweet: {tweet_text}")
         client.create_tweet(text=tweet_text)
         logger.info(f"Tweet posted successfully: {tweet_text}")
     except tweepy.TweepyException as e:
         if hasattr(e, 'response') and e.response.status_code == 429:
-            logger.error(f"Rate limit error: {e.response.text}")
-            logger.warning(f"Logging failed tweet: {tweet_text}")
-            with open("failed_tweets.log", "a") as f:
-                f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
-            wait_time = 15 * 60  # 15 minutes
+            wait_time = 1800  # 30 minutes
             logger.warning(f"Rate limit exceeded. Waiting {wait_time//60} minutes...")
             time.sleep(wait_time)
-            post_tweet(tweet_text)  # Retry after waiting
+            post_tweet(tweet_text)
         else:
             logger.error(f"Tweet error: {str(e)}")
-            with open("failed_tweets.log", "a") as f:
-                f.write(f"{datetime.now().isoformat()}: {tweet_text}\n")
             raise
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        time.sleep(300)
+        raise
