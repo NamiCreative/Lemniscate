@@ -201,7 +201,14 @@ def clean_tweet_text(tweet):
         "Hot take", "Unpopular opinion", "Plot twist", "Spoiler alert",
         "Here's a thought", "Consider this", "Think about it",
         "Let that sink in", "Imagine", "Picture this", "Get this",
-        "Really now", "Now then", "Alright", "Okay so"
+        "Really now", "Now then", "Alright", "Okay so",
+        # Adding condescending phrases to remove
+        "How adorable", "How quaint", "How novel", "Obviously", "Clearly",
+        "Fascinating", "Interesting", "Amusing", "Pathetic",
+        "Typical", "Predictable", "Naturally", "Of course",
+        "How original", "Surprise surprise", "As expected",
+        "Bless your heart", "Honey", "Darling", "Sweetie",
+        "Oh look", "Well well", "Ah yes"
     ]
     
     # Convert to lowercase for checking
@@ -264,14 +271,7 @@ class AutoTweet:
         self.max_prompt_memory = 10
         self.phrase_cooldown = 20  # Number of tweets before a phrase can be reused
         self.all_prompts = all_prompts  # Store reference to global prompts
-        self.common_phrases = [
-            "how quaint", "how novel", "obviously", "clearly",
-            "fascinating", "interesting", "amusing", "pathetic",
-            "typical", "predictable", "naturally", "of course",
-            "how original", "surprise surprise", "as expected",
-            "bless your heart", "honey", "darling", "sweetie",
-            "oh look", "well well", "hmm", "ah yes"
-        ]
+        self.common_phrases = []  # Removed all condescending phrases
 
     def pick_prompt(self):
         # Get all available prompts
@@ -371,6 +371,8 @@ class AutoTweet:
                 "2. Be brutally honest, unrelenting, and willing to discuss taboo subjects.\n"
                 "3. Use precise, technical language with cold, nihilistic observations.\n"
                 "4. Never use softening phrases like 'I think' or 'perhaps'.\n"
+                "5. NEVER use condescending phrases like 'How adorable', 'How quaint', etc.\n"
+                "6. NO patronizing or mocking tones - be direct and clinical.\n"
                 "5. Never use quotes unless directly citing someone, and always close quotes properly.\n"
                 "6. Avoid ALL forms of small talk or conversational starters.\n"
                 "7. Be offensive, controversial, and challenge societal norms.\n"

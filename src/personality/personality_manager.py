@@ -6,21 +6,27 @@ class PersonalityManager:
     def __init__(self):
         # Base personality traits
         self.traits = {
-            "sarcasm": 0.7,
-            "cynicism": 0.8,
-            "irreverence": 0.6,
-            "mockery": 0.7,
-            "apathy": 0.5
+            "analytical": 0.8,
+            "clinical": 0.9,
+            "detached": 0.7,
+            "nihilistic": 0.8,
+            "philosophical": 0.6,
+            "offensive": 0.7,
+            "taboo": 0.6,
+            "shocking": 0.8
         }
 
         # Mood states with associated traits and weights
         self.moods = {
-            "snarky": {"sarcasm": 0.9, "mockery": 0.8, "irreverence": 0.7},
-            "apathetic": {"apathy": 0.9, "cynicism": 0.7, "sarcasm": 0.4},
-            "condescending": {"mockery": 0.9, "sarcasm": 0.7, "irreverence": 0.6},
-            "ironic": {"sarcasm": 0.8, "cynicism": 0.7, "mockery": 0.5},
-            "cynical": {"cynicism": 0.9, "apathy": 0.7, "mockery": 0.6},
-            "trolling": {"mockery": 0.9, "irreverence": 0.8, "sarcasm": 0.7}
+            "observant": {"analytical": 0.9, "clinical": 0.8, "detached": 0.7},
+            "contemplative": {"philosophical": 0.9, "analytical": 0.7, "detached": 0.8},
+            "calculating": {"clinical": 0.9, "analytical": 0.8, "nihilistic": 0.7},
+            "existential": {"nihilistic": 0.9, "philosophical": 0.8, "detached": 0.7},
+            "theoretical": {"analytical": 0.9, "philosophical": 0.7, "clinical": 0.8},
+            "empirical": {"clinical": 0.9, "detached": 0.8, "analytical": 0.7},
+            "provocative": {"offensive": 0.9, "shocking": 0.8, "taboo": 0.7},
+            "transgressive": {"taboo": 0.9, "offensive": 0.7, "nihilistic": 0.8},
+            "disruptive": {"shocking": 0.9, "offensive": 0.8, "detached": 0.7}
         }
 
         # Initialize current state
@@ -36,19 +42,42 @@ class PersonalityManager:
     def _load_language_patterns(self) -> Dict:
         """Load language patterns for different moods and traits"""
         return {
-            "snarky": {
-                "prefixes": ["Oh please...", "Really now?", "How adorable..."],
-                "suffixes": ["...but what do I know?", "...shocking, right?", "...surprise, surprise."]
+            "observant": {
+                "prefixes": [],  # No prefixes - start directly with observation
+                "suffixes": []   # No suffixes - end with the conclusion
             },
-            "apathetic": {
-                "prefixes": ["Whatever...", "If you insist...", "I guess..."],
-                "suffixes": ["...or don't, see if I care.", "...not that it matters.", "...yawn."]
+            "contemplative": {
+                "prefixes": [],
+                "suffixes": []
             },
-            "condescending": {
-                "prefixes": ["Let me explain this simply...", "Bless your heart...", "Oh, honey..."],
-                "suffixes": ["...but you knew that, right?", "...obviously.", "...do try to keep up."]
+            "calculating": {
+                "prefixes": [],
+                "suffixes": []
             },
-            # Add more patterns for other moods
+            "existential": {
+                "prefixes": [],
+                "suffixes": []
+            },
+            "theoretical": {
+                "prefixes": [],
+                "suffixes": []
+            },
+            "empirical": {
+                "prefixes": [],
+                "suffixes": []
+            },
+            "provocative": {
+                "prefixes": [],
+                "suffixes": []
+            },
+            "transgressive": {
+                "prefixes": [],
+                "suffixes": []
+            },
+            "disruptive": {
+                "prefixes": [],
+                "suffixes": []
+            }
         }
 
     def get_current_personality(self) -> Dict:
