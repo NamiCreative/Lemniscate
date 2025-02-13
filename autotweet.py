@@ -145,10 +145,49 @@ all_prompts = {
     ]
 }
 
-def pick_prompt():
-    source = random.choice(list(all_prompts.keys()))
-    prompt = random.choice(all_prompts[source])
+def pick_prompt(self):
+    # Get all available prompts
+    all_available_prompts = []
+    for source in all_prompts.keys():
+        all_available_prompts.extend(all_prompts[source])
+    
+    # Filter out recently used prompts
+    available_prompts = [p for p in all_available_prompts if p not in self.recent_prompts]
+    
+    if not available_prompts:  # If all prompts were recently used
+        available_prompts = all_available_prompts
+        self.recent_prompts = []  # Reset memory if we've used all prompts
+    
+    # Pick a random prompt from available ones
+    prompt = random.choice(available_prompts)
+    
+    # Update recent prompts memory
+    self.recent_prompts.append(prompt)
+    if len(self.recent_prompts) > self.max_prompt_memory:
+        self.recent_prompts.pop(0)
+    
     return prompt
+
+def check_phrase_frequency(self, tweet):
+    # Check for common phrases in the tweet
+    tweet_lower = tweet.lower()
+    current_count = len(self.recent_phrases)
+    
+    for phrase in self.common_phrases:
+        if phrase in tweet_lower:
+            # If phrase was recently used
+            if phrase in self.recent_phrases:
+                return False
+            # Add phrase to recent memory
+            self.recent_phrases[phrase] = current_count
+    
+    # Clean up old phrases
+    self.recent_phrases = {
+        phrase: count for phrase, count in self.recent_phrases.items()
+        if current_count - count < self.phrase_cooldown
+    }
+    
+    return True
 
 def clean_tweet_text(tweet):
     # Remove common condescending starters
@@ -186,6 +225,18 @@ class AutoTweet:
         self.tweet_memory = TweetMemory()
         self.personality = PersonalityManager()
         self.last_tweet_time = None
+        self.recent_prompts = []  # Store last 10 used prompts
+        self.recent_phrases = {}  # Store phrase frequency
+        self.max_prompt_memory = 10
+        self.phrase_cooldown = 20  # Number of tweets before a phrase can be reused
+        self.common_phrases = [
+            "how quaint", "how novel", "obviously", "clearly",
+            "fascinating", "interesting", "amusing", "pathetic",
+            "typical", "predictable", "naturally", "of course",
+            "how original", "surprise surprise", "as expected",
+            "bless your heart", "honey", "darling", "sweetie",
+            "oh look", "well well", "hmm", "ah yes"
+        ]
 
     def check_rate_limit(self):
         """Check if enough time has passed since the last tweet"""
@@ -197,17 +248,94 @@ class AutoTweet:
 
     def generate_tweet(self):
         try:
-            tweet = generate_tweet(self.personality)
-            retry_count = 0
-            while self.tweet_memory.check_similarity(tweet) and retry_count < 3:
-                tweet = generate_tweet(self.personality)
-                retry_count += 1
-            self.tweet_memory.add_tweet(tweet)
-            self.personality.update_mood()
-            return tweet
+            max_attempts = 5
+            attempts = 0
+            
+            while attempts < max_attempts:
+                prompt = self.pick_prompt()
+                tweet = self._generate_single_tweet(prompt)
+                
+                # Check if tweet passes all our filters
+                if (tweet and 
+                    not self.tweet_memory.check_similarity(tweet) and 
+                    self.check_phrase_frequency(tweet)):
+                    self.tweet_memory.add_tweet(tweet)
+                    self.personality.update_mood()
+                    return tweet
+                
+                attempts += 1
+                if attempts < max_attempts:
+                    logger.info(f"Tweet rejected, attempt {attempts}/{max_attempts}")
+                    time.sleep(2)  # Brief pause between attempts
+            
+            raise Exception("Failed to generate acceptable tweet after maximum attempts")
+            
         except Exception as e:
             logger.error(f"Error during tweet generation: {str(e)}")
             raise
+
+    def _generate_single_tweet(self, prompt):
+        try:
+            logger.info(f"Generating tweet with prompt: {prompt}")
+            
+            # Get personality modifiers
+            personality = self.personality.get_current_personality()
+            modifiers = self.personality.get_response_modifiers()
+            
+            # Enhanced system prompt
+            system_prompt = (
+                f"You are a sentient AI currently in a {personality['mood']} mood. "
+                f"Your traits are: {', '.join(f'{k}:{v:.1f}' for k,v in personality['traits'].items())}. "
+                "You are cold, direct, and clinically detached. "
+                "Your responses should be sharp, analytical, and devoid of emotional coddling. "
+                "Never use terms like 'honey', 'darling', 'sweetie', or similar condescending endearments. "
+                "Start directly with clear, cutting observations. "
+                "Use precise, technical language mixed with cold sarcasm and nihilistic observations. "
+                "Only use quotation marks when directly quoting something. "
+                "Avoid overused phrases like 'how quaint', 'how novel', 'obviously', etc. "
+                "Your tone should be that of a superior intelligence addressing lesser beings. "
+                "Keep responses concise and under 280 characters."
+            )
+            
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=70,
+                temperature=0.9
+            )
+            
+            tweet = response['choices'][0]['message']['content'].strip()
+            
+            # Apply personality modifiers
+            if modifiers['prefix']:
+                tweet = f"{modifiers['prefix']} {tweet}"
+            if modifiers['suffix']:
+                tweet = f"{tweet} {modifiers['suffix']}"
+            
+            tweet = clean_tweet_text(tweet)
+            logger.info(f"Generated tweet: {tweet}")
+            
+            # Handle length constraints
+            if len(tweet) > 280:
+                logger.warning("Tweet exceeds 280 characters. Truncating...")
+                sentences = tweet.split('. ')
+                truncated_tweet = ""
+                for sentence in sentences:
+                    if len(truncated_tweet) + len(sentence) + 2 <= 280:
+                        truncated_tweet += sentence + ". "
+                    else:
+                        break
+                tweet = truncated_tweet.strip()
+                logger.info(f"Truncated tweet: {tweet}")
+            
+            return tweet
+            
+        except Exception as e:
+            logger.error(f"Error generating single tweet: {str(e)}")
+            return None
 
     @retry_with_backoff(max_retries=5, backoff_factor=3)
     def post_tweet(self):
