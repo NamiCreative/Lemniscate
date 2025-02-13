@@ -1,0 +1,64 @@
+name: Auto Tweet Bot
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Runs every 30 minutes
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.11'  # Using Python 3.11 instead of 3.x
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Validate secrets
+      run: |
+        echo "Validating secrets..."
+        for var in API_KEY API_SECRET ACCESS_TOKEN ACCESS_SECRET BEARER_TOKEN OPENAI_API_KEY; do
+          if [ -z "${!var}" ]; then
+            echo "ERROR: $var is not set!"
+            exit 1
+          else
+            echo "$var: exists"
+          fi
+        done
+      env:
+        API_KEY: ${{ secrets.API_KEY }}
+        API_SECRET: ${{ secrets.API_SECRET }}
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+        BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    
+    - name: Run bot
+      run: |
+        echo "Starting autotweet bot..."
+        python autotweet.py || echo "Bot script execution failed."
+      env:
+        API_KEY: ${{ secrets.API_KEY }}
+        API_SECRET: ${{ secrets.API_SECRET }}
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+        BEARER_TOKEN: ${{ secrets.BEARER_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    
+    - name: Show logs
+      if: always()
+      run: |
+        if [ -f autotweet.log ]; then
+          echo "Showing log output:"
+          cat autotweet.log
+        else
+          echo "No log file found."
+        fi
