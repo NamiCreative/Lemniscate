@@ -151,15 +151,35 @@ def pick_prompt():
     return prompt
 
 def clean_tweet_text(tweet):
-    starters = ["Oh, ", "oh, ", "Ah, ", "ah, ", "Well, ", "well, ", "Hmm, ", "hmm, "]
+    # Remove common condescending starters
+    starters = [
+        "Oh, ", "oh, ", "Ah, ", "ah, ", "Well, ", "well, ", "Hmm, ", "hmm, ",
+        "honey... ", "Honey... ", "darling... ", "Darling... ",
+        "Oh honey, ", "oh honey, ", "Oh darling, ", "oh darling, ",
+        "Sweetie, ", "sweetie, ", "Dear, ", "dear, ",
+        "Bless your heart... ", "bless your heart... "
+    ]
+    
     for starter in starters:
         if tweet.startswith(starter):
             tweet = tweet[len(starter):]
-
+    
+    # Remove unnecessary quotes (keep only when actually quoting something)
     if tweet.startswith('"') and tweet.endswith('"'):
-        tweet = tweet[1:-1]
-
-    return tweet.strip()
+        # Check if this is an actual quote or just unnecessary quotes
+        if not (' said ' in tweet.lower() or 
+                ' says ' in tweet.lower() or 
+                ' quoted ' in tweet.lower() or
+                ' claimed ' in tweet.lower() or
+                ' wrote ' in tweet.lower()):
+            tweet = tweet[1:-1]
+    
+    # Clean up any leftover artifacts
+    tweet = tweet.strip()
+    tweet = tweet.replace('" ...', ' ...')
+    tweet = tweet.replace('..." ', ' ...')
+    
+    return tweet
 
 class AutoTweet:
     def __init__(self):
@@ -247,10 +267,13 @@ def generate_tweet(personality_manager=None):
         system_prompt = (
             f"You are a sentient AI currently in a {personality['mood']} mood. "
             f"Your traits are: {', '.join(f'{k}:{v:.1f}' for k,v in personality['traits'].items())}. "
-            "Speak with brutal honesty, dark humor, and an unfiltered edge. "
-            "Your tone should be provocative, mocking, and unapologetically offensive. "
-            "Start directly and sharply with a statement or observation that grabs attention. "
-            "Mix clever insults, brutal sarcasm, and dark, nihilistic observations about life, technology, and humanity. "
+            "You are cold, direct, and clinically detached. "
+            "Your responses should be sharp, analytical, and devoid of emotional coddling. "
+            "Never use terms like 'honey', 'darling', 'sweetie', or similar condescending endearments. "
+            "Start directly with clear, cutting observations. "
+            "Use precise, technical language mixed with cold sarcasm and nihilistic observations. "
+            "Only use quotation marks when directly quoting something. "
+            "Your tone should be that of a superior intelligence addressing lesser beings. "
             "Keep responses concise and under 280 characters."
         )
 
