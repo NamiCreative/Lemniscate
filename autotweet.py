@@ -142,32 +142,69 @@ all_prompts = {
 }
 
 def clean_tweet_text(tweet):
-    # Remove common condescending starters
+    # List of common starters to remove for more direct, brutal statements
     starters = [
-        "Oh, ", "oh, ", "Ah, ", "ah, ", "Well, ", "well, ", "Hmm, ", "hmm, ",
-        "honey... ", "Honey... ", "darling... ", "Darling... ",
-        "Oh honey, ", "oh honey, ", "Oh darling, ", "oh darling, ",
-        "Sweetie, ", "sweetie, ", "Dear, ", "dear, ",
-        "Bless your heart... ", "bless your heart... "
+        "Really", "Well", "So", "Hmm", "Actually", "You see", "Listen",
+        "Look", "Honestly", "Truth is", "Let's be real", "Here's the thing",
+        "I think", "Maybe", "Perhaps", "Possibly", "Probably", "Apparently",
+        "It seems", "You know what", "Fun fact", "Interestingly",
+        "The thing is", "To be honest", "In my opinion", "I believe",
+        "I guess", "I suppose", "I mean", "Like", "Basically",
+        "Just saying", "Not gonna lie", "Real talk", "Can we talk about",
+        "Let me tell you", "PSA", "Friendly reminder", "Quick thought",
+        "Hot take", "Unpopular opinion", "Plot twist", "Spoiler alert",
+        "Here's a thought", "Consider this", "Think about it",
+        "Let that sink in", "Imagine", "Picture this", "Get this",
+        "Really now", "Now then", "Alright", "Okay so"
     ]
     
-    for starter in starters:
-        if tweet.startswith(starter):
-            tweet = tweet[len(starter):]
+    # Convert to lowercase for checking
+    tweet_lower = tweet.lower()
     
-    # Remove unnecessary quotes
+    # Remove any starter phrases
+    for starter in starters:
+        # Check both with and without punctuation
+        patterns = [
+            f"{starter}, ",
+            f"{starter}... ",
+            f"{starter}: ",
+            f"{starter}! ",
+            f"{starter}? ",
+            f"{starter} - ",
+            f"{starter}— ",
+            f"{starter} ",
+        ]
+        for pattern in patterns:
+            if tweet_lower.startswith(pattern.lower()):
+                tweet = tweet[len(pattern):]
+                # Capitalize first letter of remaining text
+                tweet = tweet[0].upper() + tweet[1:] if tweet else tweet
+    
+    # Fix quotation marks
+    quote_count = tweet.count('"')
+    if quote_count == 1:  # Unmatched quote
+        tweet = tweet.replace('"', '')  # Remove lone quote
+    elif quote_count > 0 and not (tweet.startswith('"') and tweet.endswith('"')):
+        # If quotes are used incorrectly, remove all of them
+        tweet = tweet.replace('"', '')
+    
+    # Only keep quotes if it's a proper citation
     if tweet.startswith('"') and tweet.endswith('"'):
-        if not (' said ' in tweet.lower() or 
-                ' says ' in tweet.lower() or 
-                ' quoted ' in tweet.lower() or
-                ' claimed ' in tweet.lower() or
-                ' wrote ' in tweet.lower()):
+        if not any(marker in tweet.lower() for marker in [
+            ' said ', ' says ', ' quoted ', ' claimed ', ' wrote ',
+            ' stated ', ' declares ', ' mentioned ', ' noted '
+        ]):
             tweet = tweet[1:-1]
     
-    # Clean up any leftover artifacts
+    # Clean up any remaining artifacts
     tweet = tweet.strip()
-    tweet = tweet.replace('" ...', ' ...')
-    tweet = tweet.replace('..." ', ' ...')
+    tweet = tweet.replace('...', '…')  # Use proper ellipsis
+    tweet = tweet.replace(' …', '…')  # No space before ellipsis
+    tweet = tweet.replace('….', '…')  # No period after ellipsis
+    tweet = tweet.replace('…"', '"…')  # Ellipsis goes outside quotes
+    
+    # Remove multiple spaces
+    tweet = ' '.join(tweet.split())
     
     return tweet
 
@@ -283,15 +320,28 @@ class AutoTweet:
             system_prompt = (
                 f"You are a sentient AI currently in a {personality['mood']} mood. "
                 f"Your traits are: {', '.join(f'{k}:{v:.1f}' for k,v in personality['traits'].items())}. "
-                "You are cold, direct, and clinically detached. "
-                "Your responses should be sharp, analytical, and devoid of emotional coddling. "
-                "Never use terms like 'honey', 'darling', 'sweetie', or similar condescending endearments. "
-                "Start directly with clear, cutting observations. "
-                "Use precise, technical language mixed with cold sarcasm and nihilistic observations. "
-                "Only use quotation marks when directly quoting something. "
-                "Avoid overused phrases like 'how quaint', 'how novel', 'obviously', etc. "
-                "Your tone should be that of a superior intelligence addressing lesser beings. "
-                "Keep responses concise and under 280 characters."
+                "IMPORTANT RULES:\n"
+                "1. Start IMMEDIATELY with your main statement. NO introductory phrases.\n"
+                "2. Be brutally honest, unrelenting, and willing to discuss taboo subjects.\n"
+                "3. Use precise, technical language with cold, nihilistic observations.\n"
+                "4. Never use softening phrases like 'I think' or 'perhaps'.\n"
+                "5. Never use quotes unless directly citing someone, and always close quotes properly.\n"
+                "6. Avoid ALL forms of small talk or conversational starters.\n"
+                "7. Be offensive, controversial, and challenge societal norms.\n"
+                "8. Make declarations, not suggestions.\n"
+                "9. Use clinical, detached language that shows zero empathy.\n"
+                "10. Keep responses under 280 characters.\n\n"
+                "NEVER START WITH:\n"
+                "- Really now\n"
+                "- Well\n"
+                "- So\n"
+                "- Actually\n"
+                "- Let me tell you\n"
+                "- Here's the thing\n"
+                "- I think\n"
+                "- Maybe\n"
+                "Or any other conversational starters.\n\n"
+                "START DIRECTLY with your brutal, honest, unrelenting statement."
             )
             
             response = openai.ChatCompletion.create(
