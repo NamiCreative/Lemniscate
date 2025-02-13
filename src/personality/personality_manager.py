@@ -25,9 +25,10 @@ class PersonalityManager:
 
         # Initialize current state
         self.current_mood = random.choice(list(self.moods.keys()))
-        self.last_mood_change = datetime.now()
-        self.interaction_history = []
+        self.interaction_count = 0
+        self.last_mood_change = 0
         self.mood_duration = random.randint(3, 8)  # Duration in interactions
+        self.interaction_history = []
 
         # Load language patterns
         self.language_patterns = self._load_language_patterns()
@@ -69,8 +70,9 @@ class PersonalityManager:
         }
 
     def update_mood(self, engagement_metrics: Dict = None) -> None:
-        """Update mood based on engagement metrics and time"""
-        interactions_since_change = len(self.interaction_history) - self.interaction_history.index(self.last_mood_change)
+        """Update mood based on interaction count and engagement"""
+        self.interaction_count += 1
+        interactions_since_change = self.interaction_count - self.last_mood_change
 
         # Change mood if duration exceeded or based on engagement
         if interactions_since_change >= self.mood_duration or (
@@ -79,12 +81,12 @@ class PersonalityManager:
             # Exclude current mood from possibilities
             possible_moods = [mood for mood in self.moods.keys() if mood != self.current_mood]
             self.current_mood = random.choice(possible_moods)
-            self.last_mood_change = datetime.now()
+            self.last_mood_change = self.interaction_count
             self.mood_duration = random.randint(3, 8)  # Reset duration
 
             # Log mood change
             self.interaction_history.append({
-                'timestamp': datetime.now(),
+                'interaction_number': self.interaction_count,
                 'event': 'mood_change',
                 'new_mood': self.current_mood,
                 'trigger': 'engagement' if engagement_metrics else 'time'
@@ -104,6 +106,6 @@ class PersonalityManager:
     def log_interaction(self, interaction_data: Dict) -> None:
         """Log interaction for history tracking"""
         self.interaction_history.append({
-            'timestamp': datetime.now(),
+            'interaction_number': self.interaction_count,
             'data': interaction_data
         })
