@@ -1,1 +1,8 @@
 commit_and_push.sh
+commit_all.sh
+commit_final.sh
+*.log
+__pycache__/
+*.pyc
+.env
+.venv/
