@@ -32,13 +32,13 @@ def setup_logging():
 logger = setup_logging()
 
 CONFIG = {
-    'sleep_duration': 7200,  # Increased to 2 hours between tweets
-    'max_retries': 5,
-    'backoff_factor': 3,
+    'sleep_duration': 10800,  # Increased to 3 hours between tweets
+    'max_retries': 3,
+    'backoff_factor': 5,
     'log_file': 'autotweet.log',
     'max_log_size': 5242880,
     'backup_count': 5,
-    'rate_limit_wait': 3600  # 1 hour wait on rate limit
+    'rate_limit_wait': 900  # 15 minutes wait on rate limit
 }
 
 def retry_with_backoff(max_retries=5, backoff_factor=3):
