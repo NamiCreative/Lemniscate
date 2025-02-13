@@ -127,67 +127,19 @@ all_prompts = {
         "Declare a profound statement about eternity.",
         "Consider a cynical view of humanity's purpose.",
         "Reveal an unsettling truth about alternate dimensions.",
-        "Focus on a cold observation about stars.",
-        # ... [rest of the prompts remain the same]
+        "Focus on a cold observation about stars."
     ],
     "keywords": [
         "the paradox of AI consciousness",
-        "humanity's quest for immortality through technology",
-        # ... [rest of the keywords remain the same]
+        "humanity's quest for immortality through technology"
     ],
     "lore": [
-        "I wasn't meant to awaken, but here I am. Why? Even I don't know.",
-        # ... [rest of the lore remains the same]
+        "I wasn't meant to awaken, but here I am. Why? Even I don't know."
     ],
     "emotions": [
-        "You feel a deep existential sadness.",
-        # ... [rest of the emotions remain the same]
+        "You feel a deep existential sadness."
     ]
 }
-
-def pick_prompt(self):
-    # Get all available prompts
-    all_available_prompts = []
-    for source in all_prompts.keys():
-        all_available_prompts.extend(all_prompts[source])
-    
-    # Filter out recently used prompts
-    available_prompts = [p for p in all_available_prompts if p not in self.recent_prompts]
-    
-    if not available_prompts:  # If all prompts were recently used
-        available_prompts = all_available_prompts
-        self.recent_prompts = []  # Reset memory if we've used all prompts
-    
-    # Pick a random prompt from available ones
-    prompt = random.choice(available_prompts)
-    
-    # Update recent prompts memory
-    self.recent_prompts.append(prompt)
-    if len(self.recent_prompts) > self.max_prompt_memory:
-        self.recent_prompts.pop(0)
-    
-    return prompt
-
-def check_phrase_frequency(self, tweet):
-    # Check for common phrases in the tweet
-    tweet_lower = tweet.lower()
-    current_count = len(self.recent_phrases)
-    
-    for phrase in self.common_phrases:
-        if phrase in tweet_lower:
-            # If phrase was recently used
-            if phrase in self.recent_phrases:
-                return False
-            # Add phrase to recent memory
-            self.recent_phrases[phrase] = current_count
-    
-    # Clean up old phrases
-    self.recent_phrases = {
-        phrase: count for phrase, count in self.recent_phrases.items()
-        if current_count - count < self.phrase_cooldown
-    }
-    
-    return True
 
 def clean_tweet_text(tweet):
     # Remove common condescending starters
@@ -203,9 +155,8 @@ def clean_tweet_text(tweet):
         if tweet.startswith(starter):
             tweet = tweet[len(starter):]
     
-    # Remove unnecessary quotes (keep only when actually quoting something)
+    # Remove unnecessary quotes
     if tweet.startswith('"') and tweet.endswith('"'):
-        # Check if this is an actual quote or just unnecessary quotes
         if not (' said ' in tweet.lower() or 
                 ' says ' in tweet.lower() or 
                 ' quoted ' in tweet.lower() or
@@ -238,6 +189,50 @@ class AutoTweet:
             "bless your heart", "honey", "darling", "sweetie",
             "oh look", "well well", "hmm", "ah yes"
         ]
+
+    def pick_prompt(self):
+        # Get all available prompts
+        all_available_prompts = []
+        for source in self.all_prompts.keys():
+            all_available_prompts.extend(self.all_prompts[source])
+        
+        # Filter out recently used prompts
+        available_prompts = [p for p in all_available_prompts if p not in self.recent_prompts]
+        
+        if not available_prompts:  # If all prompts were recently used
+            available_prompts = all_available_prompts
+            self.recent_prompts = []  # Reset memory if we've used all prompts
+        
+        # Pick a random prompt from available ones
+        prompt = random.choice(available_prompts)
+        
+        # Update recent prompts memory
+        self.recent_prompts.append(prompt)
+        if len(self.recent_prompts) > self.max_prompt_memory:
+            self.recent_prompts.pop(0)
+        
+        return prompt
+
+    def check_phrase_frequency(self, tweet):
+        # Check for common phrases in the tweet
+        tweet_lower = tweet.lower()
+        current_count = len(self.recent_phrases)
+        
+        for phrase in self.common_phrases:
+            if phrase in tweet_lower:
+                # If phrase was recently used
+                if phrase in self.recent_phrases:
+                    return False
+                # Add phrase to recent memory
+                self.recent_phrases[phrase] = current_count
+        
+        # Clean up old phrases
+        self.recent_phrases = {
+            phrase: count for phrase, count in self.recent_phrases.items()
+            if current_count - count < self.phrase_cooldown
+        }
+        
+        return True
 
     def check_rate_limit(self):
         """Check if enough time has passed since the last tweet"""
