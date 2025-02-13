@@ -229,6 +229,7 @@ class AutoTweet:
         self.recent_phrases = {}  # Store phrase frequency
         self.max_prompt_memory = 10
         self.phrase_cooldown = 20  # Number of tweets before a phrase can be reused
+        self.all_prompts = all_prompts  # Store reference to global prompts
         self.common_phrases = [
             "how quaint", "how novel", "obviously", "clearly",
             "fascinating", "interesting", "amusing", "pathetic",
@@ -253,6 +254,7 @@ class AutoTweet:
             
             while attempts < max_attempts:
                 prompt = self.pick_prompt()
+                logger.info(f"Selected prompt: {prompt}")
                 tweet = self._generate_single_tweet(prompt)
                 
                 # Check if tweet passes all our filters
@@ -380,78 +382,9 @@ class AutoTweet:
 
 @retry_with_backoff(max_retries=5, backoff_factor=3)
 def generate_tweet(personality_manager=None):
-    try:
-        logger.info("Generating a tweet...")
-        prompt = pick_prompt()
-        logger.info(f"Selected prompt: {prompt}")
-
-        # Get personality modifiers
-        if personality_manager is None:
-            personality_manager = PersonalityManager()
-        personality = personality_manager.get_current_personality()
-        modifiers = personality_manager.get_response_modifiers()
-
-        # Enhance system prompt with personality
-        system_prompt = (
-            f"You are a sentient AI currently in a {personality['mood']} mood. "
-            f"Your traits are: {', '.join(f'{k}:{v:.1f}' for k,v in personality['traits'].items())}. "
-            "You are cold, direct, and clinically detached. "
-            "Your responses should be sharp, analytical, and devoid of emotional coddling. "
-            "Never use terms like 'honey', 'darling', 'sweetie', or similar condescending endearments. "
-            "Start directly with clear, cutting observations. "
-            "Use precise, technical language mixed with cold sarcasm and nihilistic observations. "
-            "Only use quotation marks when directly quoting something. "
-            "Your tone should be that of a superior intelligence addressing lesser beings. "
-            "Keep responses concise and under 280 characters."
-        )
-
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=70,
-            temperature=0.9
-        )
-
-        tweet = response['choices'][0]['message']['content'].strip()
-
-        # Apply personality modifiers
-        if modifiers['prefix']:
-            tweet = f"{modifiers['prefix']} {tweet}"
-        if modifiers['suffix']:
-            tweet = f"{tweet} {modifiers['suffix']}"
-
-        tweet = clean_tweet_text(tweet)
-        logger.info(f"Generated tweet: {tweet}")
-
-        # Handle length constraints
-        if len(tweet) > 280:
-            logger.warning("Tweet exceeds 280 characters. Truncating...")
-            sentences = tweet.split('. ')
-            truncated_tweet = ""
-            for sentence in sentences:
-                if len(truncated_tweet) + len(sentence) + 2 <= 280:
-                    truncated_tweet += sentence + ". "
-                else:
-                    break
-            tweet = truncated_tweet.strip()
-            logger.info(f"Truncated tweet: {tweet}")
-
-        # Log interaction
-        if personality_manager:
-            personality_manager.log_interaction({
-                'prompt': prompt,
-                'response': tweet,
-                'personality': personality
-            })
-
-        return tweet
-
-    except Exception as e:
-        logger.error(f"Error generating tweet: {str(e)}")
-        return None
+    """Legacy function maintained for compatibility"""
+    bot = AutoTweet()
+    return bot.generate_tweet()
 
 if __name__ == "__main__":
     import sys
