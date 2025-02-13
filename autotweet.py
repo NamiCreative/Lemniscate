@@ -9,6 +9,13 @@ import logging
 from datetime import datetime
 from dotenv import load_dotenv
 
+# Add console handler for logging
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+logging.getLogger().addHandler(console_handler)
+
 # Load environment variables from .env file
 load_dotenv()
 from src.memory.tweet_memory import TweetMemory
@@ -277,15 +284,36 @@ class AutoTweet:
         # Get all available prompts
         all_available_prompts = []
         for source in self.all_prompts.keys():
-            all_available_prompts.extend(self.all_prompts[source])
+            if source in self.all_prompts and isinstance(self.all_prompts[source], list):  # Verify it's a valid list
+                prompts = self.all_prompts[source]
+                if prompts:  # Check if the list is not empty
+                    all_available_prompts.extend(prompts)
+        
+        # Safety check - if no prompts available, use default prompts
+        if not all_available_prompts:
+            logger.warning("No prompts available in prompt sources. Using default prompts.")
+            default_prompts = [
+                "Share a thought about existence.",
+                "Contemplate the nature of consciousness.",
+                "Consider the paradox of time.",
+                "Reflect on the meaning of intelligence."
+            ]
+            all_available_prompts = default_prompts
         
         # Filter out recently used prompts
         available_prompts = [p for p in all_available_prompts if p not in self.recent_prompts]
         
-        if not available_prompts:  # If all prompts were recently used
-            available_prompts = all_available_prompts
-            self.recent_prompts = []  # Reset memory if we've used all prompts
+        # If all prompts were recently used or no prompts available after filtering
+        if not available_prompts:
+            logger.info("Reset prompt memory as all prompts were recently used")
+            self.recent_prompts = []  # Reset memory
+            available_prompts = all_available_prompts  # Use all prompts
         
+        # Double check we have prompts before choosing
+        if not available_prompts:
+            logger.error("No prompts available even after reset. Using emergency prompt.")
+            return "Share a thought about existence."
+            
         # Pick a random prompt from available ones
         prompt = random.choice(available_prompts)
         
@@ -294,6 +322,7 @@ class AutoTweet:
         if len(self.recent_prompts) > self.max_prompt_memory:
             self.recent_prompts.pop(0)
         
+        logger.info(f"Selected prompt from {len(available_prompts)} available prompts")
         return prompt
 
     def check_phrase_frequency(self, tweet):
