@@ -177,10 +177,10 @@ class AutoTweet:
 
     def generate_tweet(self):
         try:
-            tweet = generate_tweet()
+            tweet = generate_tweet(self.personality)
             retry_count = 0
             while self.tweet_memory.check_similarity(tweet) and retry_count < 3:
-                tweet = generate_tweet()
+                tweet = generate_tweet(self.personality)
                 retry_count += 1
             self.tweet_memory.add_tweet(tweet)
             self.personality.update_mood()
@@ -231,16 +231,17 @@ class AutoTweet:
             raise
 
 @retry_with_backoff(max_retries=5, backoff_factor=3)
-def generate_tweet():
+def generate_tweet(personality_manager=None):
     try:
         logger.info("Generating a tweet...")
         prompt = pick_prompt()
         logger.info(f"Selected prompt: {prompt}")
 
         # Get personality modifiers
-        bot = AutoTweet()
-        personality = bot.personality.get_current_personality()
-        modifiers = bot.personality.get_response_modifiers()
+        if personality_manager is None:
+            personality_manager = PersonalityManager()
+        personality = personality_manager.get_current_personality()
+        modifiers = personality_manager.get_response_modifiers()
 
         # Enhance system prompt with personality
         system_prompt = (
@@ -288,11 +289,12 @@ def generate_tweet():
             logger.info(f"Truncated tweet: {tweet}")
 
         # Log interaction
-        bot.personality.log_interaction({
-            'prompt': prompt,
-            'response': tweet,
-            'personality': personality
-        })
+        if personality_manager:
+            personality_manager.log_interaction({
+                'prompt': prompt,
+                'response': tweet,
+                'personality': personality
+            })
 
         return tweet
 
