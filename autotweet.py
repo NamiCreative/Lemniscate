@@ -305,12 +305,18 @@ def generate_tweet(personality_manager=None):
 if __name__ == "__main__":
     import sys
     
-    # Check for test mode
+    # Check for test mode and debug mode
     test_mode = "--test" in sys.argv
+    debug_mode = "--debug" in sys.argv
+    
+    if debug_mode:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Debug mode enabled")
     
     if test_mode:
         logger.info("Running in test mode...")
         CONFIG['sleep_duration'] = 60  # 1 minute between tweets in test mode
+        logger.debug("Sleep duration set to 60 seconds")
         
     # Clear failed tweets log at startup
     with open("failed_tweets.log", "w") as f:
