@@ -187,8 +187,6 @@ all_prompts = {
     ]
 }
 
-}
-
 def clean_tweet_text(tweet):
     # List of common starters to remove for more direct, brutal statements
     starters = [
