@@ -32,13 +32,16 @@ def setup_logging():
 logger = setup_logging()
 
 CONFIG = {
-    'sleep_duration': 10800,  # Increased to 3 hours between tweets
+    'sleep_duration': 10800,  # 3 hours between tweets
     'max_retries': 3,
     'backoff_factor': 5,
     'log_file': 'autotweet.log',
     'max_log_size': 5242880,
     'backup_count': 5,
-    'rate_limit_wait': 900  # 15 minutes wait on rate limit
+    'rate_limit_wait': 900,  # 15 minutes wait on rate limit
+    'rate_limit_reset_time': None,  # Will store the next reset time
+    'tweets_remaining': None,  # Will store remaining tweet quota
+    'min_tweets_threshold': 5  # Minimum tweets remaining before waiting
 }
 
 def retry_with_backoff(max_retries=5, backoff_factor=3):
@@ -64,13 +67,46 @@ def validate_secrets():
     if missing:
         raise ValueError(f"Missing required environment variables: {missing}")
 
+def check_rate_limits():
+    try:
+        # Get rate limit status for user tweets
+        response = client.get_me()
+        rate_limits = response.rate_limit
+        
+        if hasattr(rate_limits, 'remaining'):
+            CONFIG['tweets_remaining'] = rate_limits.remaining
+            CONFIG['rate_limit_reset_time'] = rate_limits.reset
+            
+            logger.info(f"Rate limits - Remaining: {CONFIG['tweets_remaining']}, Reset time: {CONFIG['rate_limit_reset_time']}")
+            
+            if CONFIG['tweets_remaining'] is not None and CONFIG['tweets_remaining'] < CONFIG['min_tweets_threshold']:
+                wait_time = (CONFIG['rate_limit_reset_time'] - datetime.now()).total_seconds()
+                if wait_time > 0:
+                    logger.warning(f"Low on tweet quota ({CONFIG['tweets_remaining']} remaining). Waiting {wait_time/60:.1f} minutes for reset.")
+                    time.sleep(wait_time + 60)  # Add 1 minute buffer
+                    return check_rate_limits()
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Rate limit check failed: {str(e)}")
+        # If we can't check rate limits, wait for the default time
+        time.sleep(CONFIG['rate_limit_wait'])
+        return False
+
 def health_check():
     try:
         validate_secrets()
+        
+        # Check rate limits first
+        if not check_rate_limits():
+            return False
+            
         # Test Twitter API connection
         test_response = client.get_me()
         if test_response and test_response.data:
             logger.info(f"Successfully connected to Twitter as @{test_response.data.username}")
+            
         # Test OpenAI API connection
         test_completion = openai.ChatCompletion.create(
             model="gpt-4",
@@ -79,7 +115,16 @@ def health_check():
         )
         if test_completion:
             logger.info("Successfully connected to OpenAI API")
+            
         return True
+        
+    except tweepy.TweepyException as e:
+        if hasattr(e, 'response') and e.response.status_code == 429:
+            logger.warning("Rate limit exceeded during health check")
+            return check_rate_limits()
+        logger.error(f"Health check failed: {str(e)}")
+        return False
+        
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         return False
@@ -469,6 +514,10 @@ class AutoTweet:
                 logger.info(f"Waiting {wait_time//3600} hours before next tweet...")
                 time.sleep(wait_time)
                 
+            # Check rate limits before attempting to tweet
+            if not check_rate_limits():
+                return None
+                
             tweet = self.generate_tweet()
             
             # Add delay before posting
@@ -479,13 +528,15 @@ class AutoTweet:
                 logger.info(f"Tweet posted successfully: {tweet}")
                 self.last_tweet_time = datetime.now()
                 return response
+                
             except tweepy.TweepyException as e:
                 if hasattr(e, 'response'):
-                    if e.response.status_code == 429:
-                        wait_time = CONFIG['rate_limit_wait']
-                        logger.warning(f"Rate limit exceeded. Waiting {wait_time//60} minutes...")
-                        time.sleep(wait_time)
-                        return self.post_tweet()
+                    if e.response.status_code == 429:  # Rate limit exceeded
+                        logger.warning("Rate limit exceeded while posting tweet")
+                        if not check_rate_limits():  # This will handle the waiting
+                            return None
+                        return self.post_tweet()  # Try again after waiting
+                        
                     elif e.response.status_code in [500, 502, 503, 504]:
                         logger.warning(f"Twitter server error {e.response.status_code}. Retrying...")
                         time.sleep(300)  # Wait 5 minutes on server errors
@@ -493,13 +544,13 @@ class AutoTweet:
                 
                 logger.error(f"Tweet error: {str(e)}")
                 with open("failed_tweets.log", "a") as f:
-                    f.write(f"{tweet}\n")
+                    f.write(f"{datetime.now().isoformat()}: {tweet}\n")
                 raise
                 
         except Exception as e:
             logger.error(f"Failed to post tweet: {str(e)}")
             with open("failed_tweets.log", "a") as f:
-                f.write(f"{tweet}\n")
+                f.write(f"{datetime.now().isoformat()}: Error - {str(e)}\n")
             raise
 
 @retry_with_backoff(max_retries=5, backoff_factor=3)
